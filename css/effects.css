@@ -1,0 +1,277 @@
+.lucio-renderer {
+  --instance-delay: 0s;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  margin: 0;
+  isolation: isolate;
+  contain: layout style;
+  overflow: visible;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.lucio-paint-canvas,
+.lucio-idle-shell,
+.lucio-art,
+.lucio-shiny-rim,
+.lucio-overlay,
+.lucio-shine,
+.lucio-lightning {
+  position: absolute;
+  inset: 0;
+}
+
+.lucio-paint-canvas {
+  overflow: visible;
+  pointer-events: none;
+}
+
+.lucio-filter-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.lucio-idle-shell {
+  transform-origin: 50% 78%;
+  overflow: visible;
+}
+
+.lucio-renderer.has-idle .lucio-idle-shell {
+  animation: lucio-idle var(--idle-speed) ease-in-out infinite alternate;
+  animation-delay: var(--instance-delay);
+}
+
+.lucio-art {
+  z-index: 2;
+  --active-brightness: 1;
+  filter: brightness(var(--active-brightness));
+  transform-origin: 50% 62%;
+  overflow: visible;
+}
+
+.lucio-renderer.is-shiny .lucio-art {
+  --active-brightness: var(--shiny-brightness);
+}
+
+.lucio-sprite,
+.lucio-shiny-rim,
+.lucio-shine img,
+.lucio-overlay--sparkles,
+.lucio-overlay--shiny,
+.lucio-overlay--diamond,
+.lucio-overlay--cosmic {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.lucio-sprite {
+  transition: filter 160ms ease;
+}
+
+.lucio-renderer.has-glow .lucio-sprite {
+  filter:
+    drop-shadow(0 0 calc(var(--glow-blur) * 0.22) var(--glow-color-alpha))
+    drop-shadow(0 0 calc(var(--glow-size) * 0.52) var(--glow-color-alpha))
+    drop-shadow(0 0 var(--glow-size) var(--glow-color-alpha));
+}
+
+.lucio-shiny-rim {
+  z-index: 1;
+  opacity: 0;
+  filter:
+    brightness(0)
+    invert(1)
+    drop-shadow(0 0 calc(var(--shiny-rim-size) * 0.45) white)
+    drop-shadow(0 0 var(--shiny-rim-size) color-mix(in srgb, white 72%, var(--glow-color)));
+  transform: scale(var(--shiny-rim-scale));
+  transform-origin: center;
+  transition: opacity 160ms ease;
+}
+
+.lucio-renderer.is-shiny .lucio-shiny-rim {
+  opacity: calc(var(--shiny-rim-opacity) * (0.7 + var(--shiny-glow-boost)));
+}
+
+.lucio-overlay {
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.lucio-overlay--sparkles {
+  transform: translate(var(--sparkle-x), var(--sparkle-y)) rotate(var(--sparkle-rotation)) scale(var(--sparkle-scale));
+  transform-origin: center;
+  mix-blend-mode: screen;
+}
+
+.lucio-renderer.has-sparkles .lucio-overlay--sparkles {
+  opacity: var(--sparkle-opacity);
+  animation: lucio-sparkle var(--sparkle-speed) ease-in-out infinite;
+  animation-delay: var(--instance-delay);
+}
+
+.lucio-overlay--diamond,
+.lucio-overlay--cosmic {
+  transform: translate(var(--special-x), var(--special-y)) rotate(var(--special-rotation)) scale(var(--special-scale));
+  transform-origin: center;
+  mix-blend-mode: screen;
+}
+
+.lucio-renderer.has-diamond .lucio-overlay--diamond,
+.lucio-renderer.has-cosmic .lucio-overlay--cosmic {
+  opacity: var(--special-opacity);
+}
+
+.lucio-renderer.has-cosmic .lucio-overlay--cosmic {
+  animation: cosmic-drift 5.5s ease-in-out infinite alternate;
+}
+
+.lucio-overlay--shiny {
+  z-index: 5;
+  mix-blend-mode: screen;
+  transform: translate(var(--shiny-x), var(--shiny-y)) rotate(var(--shiny-rotation)) scale(var(--shiny-overlay-scale));
+}
+
+.lucio-renderer.has-shiny-sparkles .lucio-overlay--shiny {
+  opacity: var(--shiny-overlay-opacity);
+  animation: shiny-stars var(--shiny-overlay-speed) steps(2, end) infinite;
+}
+
+.lucio-shine {
+  z-index: 6;
+  opacity: 0;
+  overflow: visible;
+  mix-blend-mode: screen;
+}
+
+.lucio-shine img {
+  opacity: 1;
+  filter: brightness(4) saturate(0) contrast(1.25) drop-shadow(0 0 4px white);
+  clip-path: polygon(
+    -30% 0,
+    calc(-30% + var(--shine-width)) 0,
+    calc(-30% + var(--shine-width) + var(--shine-slant)) 100%,
+    calc(-30% + var(--shine-slant)) 100%
+  );
+}
+
+.lucio-renderer.has-shine .lucio-shine {
+  opacity: var(--shine-intensity);
+}
+
+.lucio-renderer.has-shine .lucio-shine img {
+  animation: shine-sweep calc(var(--shine-speed) + var(--shine-frequency)) linear infinite;
+  animation-delay: var(--instance-delay);
+}
+
+.lucio-lightning {
+  z-index: 7;
+  opacity: 0;
+  filter: drop-shadow(0 0 5px #c4f7ff) drop-shadow(0 0 10px var(--glow-color));
+  pointer-events: none;
+}
+
+.lucio-lightning i {
+  position: absolute;
+  display: block;
+  width: 2px;
+  height: 31%;
+  background: linear-gradient(180deg, transparent, #fff 12%, #9ef7ff 52%, transparent);
+  clip-path: polygon(35% 0, 100% 0, 62% 44%, 100% 44%, 0 100%, 38% 55%, 0 55%);
+}
+
+.lucio-lightning i:nth-child(1) { left: 25%; top: 13%; transform: rotate(14deg); }
+.lucio-lightning i:nth-child(2) { right: 23%; top: 29%; height: 38%; transform: rotate(-11deg); }
+.lucio-lightning i:nth-child(3) { left: 41%; bottom: 5%; height: 24%; transform: rotate(8deg); }
+
+.lucio-renderer.has-lightning .lucio-lightning {
+  opacity: calc(var(--lightning-opacity) * var(--lightning-intensity));
+  animation: lightning-flicker var(--lightning-frequency) steps(1, end) infinite;
+}
+
+.lucio-renderer.has-pulse .lucio-art {
+  animation: lucio-pulse var(--pulse-speed) ease-in-out infinite;
+}
+
+.lucio-renderer[data-context="collection"] .lucio-lightning {
+  display: none;
+}
+
+.lucio-renderer[data-context="collection"].has-glow .lucio-sprite {
+  filter:
+    drop-shadow(0 0 calc(var(--glow-blur) * 0.18) var(--glow-color-alpha))
+    drop-shadow(0 0 calc(var(--glow-size) * 0.46) var(--glow-color-alpha));
+}
+
+.lucio-renderer[data-context="collection"] .lucio-overlay {
+  animation-duration: calc(var(--sparkle-speed) * 1.5);
+}
+
+@keyframes lucio-idle {
+  from { transform: translateY(calc(var(--idle-amplitude) * -0.45)) rotate(calc(var(--idle-rotation) * -0.45)) scale(1); }
+  to { transform: translateY(var(--idle-amplitude)) rotate(var(--idle-rotation)) scale(var(--idle-scale)); }
+}
+
+@keyframes lucio-sparkle {
+  0%, 100% { opacity: calc(var(--sparkle-opacity) * 0.72); transform: translate(var(--sparkle-x), var(--sparkle-y)) rotate(var(--sparkle-rotation)) scale(var(--sparkle-scale)); }
+  46% { opacity: var(--sparkle-opacity); transform: translate(var(--sparkle-x), var(--sparkle-y)) rotate(var(--sparkle-rotation)) scale(calc(var(--sparkle-scale) * 1.018)); }
+  58% { opacity: calc(var(--sparkle-opacity) * 0.86); }
+}
+
+@keyframes cosmic-drift {
+  from { transform: translate(var(--special-x), var(--special-y)) rotate(calc(var(--special-rotation) - 0.65deg)) scale(var(--special-scale)); filter: hue-rotate(-5deg); }
+  to { transform: translate(calc(var(--special-x) + 2px), calc(var(--special-y) - 4px)) rotate(calc(var(--special-rotation) + 0.65deg)) scale(calc(var(--special-scale) * 1.015)); filter: hue-rotate(12deg); }
+}
+
+@keyframes shiny-stars {
+  0%, 100% { opacity: calc(var(--shiny-overlay-opacity) * 0.76); transform: translate(var(--shiny-x), var(--shiny-y)) rotate(var(--shiny-rotation)) scale(var(--shiny-overlay-scale)); }
+  33% { opacity: var(--shiny-overlay-opacity); transform: translate(var(--shiny-x), var(--shiny-y)) rotate(var(--shiny-rotation)) scale(calc(var(--shiny-overlay-scale) * 1.02)); }
+  66% { opacity: calc(var(--shiny-overlay-opacity) * 0.88); }
+}
+
+@keyframes shine-sweep {
+  0%, 12% {
+    clip-path: polygon(
+      -30% 0,
+      calc(-30% + var(--shine-width)) 0,
+      calc(-30% + var(--shine-width) + var(--shine-slant)) 100%,
+      calc(-30% + var(--shine-slant)) 100%
+    );
+  }
+  58%, 100% {
+    clip-path: polygon(
+      115% 0,
+      calc(115% + var(--shine-width)) 0,
+      calc(115% + var(--shine-width) + var(--shine-slant)) 100%,
+      calc(115% + var(--shine-slant)) 100%
+    );
+  }
+}
+
+@keyframes lightning-flicker {
+  0%, 14%, 18%, 62%, 66%, 100% { visibility: hidden; transform: scaleX(0.65); }
+  15%, 17%, 63%, 65% { visibility: visible; transform: scaleX(1); }
+}
+
+@keyframes lucio-pulse {
+  0%, 100% { filter: brightness(var(--active-brightness)); transform: scale(1); }
+  50% { filter: brightness(calc(var(--active-brightness) + var(--pulse-intensity))) saturate(calc(1 + var(--pulse-intensity))); transform: scale(var(--pulse-scale)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lucio-renderer *,
+  .lucio-renderer *::before,
+  .lucio-renderer *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
