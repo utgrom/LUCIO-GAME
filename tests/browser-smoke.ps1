@@ -143,9 +143,9 @@ try {
     $paintOverflow = Invoke-PageScript -Expression 'getComputedStyle(document.querySelector(".lucio-renderer")).overflow'
     Assert-Equal $paintOverflow 'visible' 'canvas visual sin recorte'
 
-    $shinyClass = Invoke-PageScript -Expression '(()=>{const toggle=document.querySelector("[data-effect=''shiny'']"); toggle.checked=true; toggle.dispatchEvent(new Event("change",{bubbles:true})); return document.querySelector("[data-lucio-stage] .lucio-renderer").classList.contains("is-shiny")})()'
+    $shinyClass = Invoke-PageScript -Expression '(()=>{const toggle=document.querySelector("[data-shiny-modifier]"); toggle.checked=true; toggle.dispatchEvent(new Event("change",{bubbles:true})); return document.querySelector("[data-lucio-stage] .lucio-renderer").classList.contains("is-shiny")})()'
     Assert-Equal $shinyClass $true 'toggle Shiny visible'
-    $shineAnimation = Invoke-PageScript -Expression '(()=>{const toggle=document.querySelector("[data-effect=''shine'']"); toggle.checked=true; toggle.dispatchEvent(new Event("change",{bubbles:true})); return getComputedStyle(document.querySelector("[data-lucio-stage] .lucio-shine img")).animationName})()'
+    $shineAnimation = Invoke-PageScript -Expression 'getComputedStyle(document.querySelector("[data-lucio-stage] .lucio-shine img")).animationName'
     Assert-Equal $shineAnimation 'shine-sweep' 'shine sweep activo'
     $glowVisible = Invoke-PageScript -Expression '(()=>{const renderer=document.querySelector("[data-lucio-stage] .lucio-renderer");const sprite=renderer.querySelector(".lucio-sprite");return !renderer.querySelector(".lucio-glow-sprite") && getComputedStyle(sprite).filter.includes("drop-shadow")})()'
     Assert-Equal $glowVisible $true 'glow aplicado al sprite base'
@@ -153,12 +153,25 @@ try {
     Assert-Equal $sparklesLoaded $true 'destellos normales como imagen'
     $sparkleColor = Invoke-PageScript -Expression '(()=>{const input=document.querySelector("[data-path=''sparkles.color'']"); input.value="#00ff00"; input.dispatchEvent(new Event("input",{bubbles:true})); return document.querySelector("[data-lucio-stage] .lucio-sparkle-flood").getAttribute("flood-color")})()'
     Assert-Equal $sparkleColor '#00ff00' 'color de destellos configurable'
-    $shinyLoaded = Invoke-PageScript -Expression '(()=>{const toggle=document.querySelector("[data-effect=''shinySparkles'']"); toggle.checked=true; toggle.dispatchEvent(new Event("change",{bubbles:true})); const image=document.querySelector("[data-lucio-stage] .lucio-overlay--shiny"); return image.complete && image.naturalWidth===1024 && Number(getComputedStyle(image).opacity)>0})()'
+    $shinyLoaded = Invoke-PageScript -Expression '(()=>{const image=document.querySelector("[data-lucio-stage] .lucio-overlay--shiny"); return image.complete && image.naturalWidth===1024 && Number(getComputedStyle(image).opacity)>0})()'
     Assert-Equal $shinyLoaded $true 'destellos Shiny como imagen'
     $shinyEasing = Invoke-PageScript -Expression 'getComputedStyle(document.querySelector("[data-lucio-stage] .lucio-overlay--shiny")).animationTimingFunction'
     Assert-Equal $shinyEasing 'ease-in-out' 'movimiento Shiny suavizado'
     $shinyColor = Invoke-PageScript -Expression '(()=>{const input=document.querySelector("[data-path=''shiny.sparkleColor'']"); input.value="#ff0000"; input.dispatchEvent(new Event("input",{bubbles:true})); return document.querySelector("[data-lucio-stage] .lucio-shiny-flood").getAttribute("flood-color")})()'
     Assert-Equal $shinyColor '#ff0000' 'color de destellos Shiny configurable'
+
+    $materialReset = Invoke-PageScript -Expression '(()=>{const input=document.querySelector("[data-path=''glow.size'']");input.value="69";input.dispatchEvent(new Event("input",{bubbles:true}));document.querySelector("[data-reset-material]").click();return document.querySelector("[data-path=''glow.size'']").value})()'
+    Assert-Equal $materialReset '42' 'reset de material'
+    $shinyReset = Invoke-PageScript -Expression '(()=>{const input=document.querySelector("[data-path=''shiny.rimSize'']");input.value="39";input.dispatchEvent(new Event("input",{bubbles:true}));document.querySelector("[data-reset-shiny]").click();return document.querySelector("[data-path=''shiny.rimSize'']").value})()'
+    Assert-Equal $shinyReset '16' 'reset de Shiny'
+    $versionSaved = Invoke-PageScript -Expression '(()=>{window.prompt=()=>"Comparativa A";const scope=document.querySelector("[data-library-scope-select]");scope.value="material";scope.dispatchEvent(new Event("change",{bubbles:true}));document.querySelector("[data-save-version]").click();return document.querySelector("[data-preset-version-select]").options.length})()'
+    Assert-Equal $versionSaved 1 'guardar version por material'
+    $versionLoaded = Invoke-PageScript -Expression '(()=>{const input=document.querySelector("[data-path=''glow.size'']");input.value="68";input.dispatchEvent(new Event("input",{bubbles:true}));document.querySelector("[data-load-version]").click();return document.querySelector("[data-path=''glow.size'']").value})()'
+    Assert-Equal $versionLoaded '42' 'cargar version guardada'
+    $shinyVersionSaved = Invoke-PageScript -Expression '(()=>{window.prompt=()=>"Shiny Alpha";const scope=document.querySelector("[data-library-scope-select]");scope.value="shinyModifier";scope.dispatchEvent(new Event("change",{bubbles:true}));document.querySelector("[data-save-version]").click();return document.querySelector("[data-preset-version-select]").options[0].textContent.includes("Shiny Alpha")})()'
+    Assert-Equal $shinyVersionSaved $true 'guardar version Shiny separada'
+    $libraryStored = Invoke-PageScript -Expression '(()=>{const data=JSON.parse(localStorage.getItem("lucioFxPresetLibrary.v1"));return data.materials.cosmic.length===1&&data.shinyModifier.length===1})()'
+    Assert-Equal $libraryStored $true 'biblioteca separa materiales y Shiny'
 
     $state = Invoke-PageScript -Expression "document.querySelector('[data-start-opening]').click(); document.querySelector('[data-opening-stage]').dataset.state"
     Assert-Equal $state 'entering' 'inicio determinista'
@@ -194,7 +207,7 @@ try {
     Assert-Equal $exceptions.Count 0 'sin excepciones de runtime'
 
     if ($ScreenshotPath) {
-        Invoke-PageScript -Expression '(()=>{for(const name of ["glow","sparkles","shiny","shinySparkles","shine"]){const toggle=document.querySelector(`[data-effect="${name}"]`); toggle.checked=true; toggle.dispatchEvent(new Event("change",{bubbles:true}))} document.querySelector("[data-lucio-stage]").scrollIntoView({block:"center"}); return new Promise(resolve=>setTimeout(()=>{for(const animation of document.querySelector("[data-lucio-stage]").getAnimations({subtree:true})){const duration=animation.effect?.getTiming().duration;if(Number.isFinite(duration)&&duration>0){animation.pause();animation.currentTime=duration*.36}} resolve(true)},260))})()' | Out-Null
+        Invoke-PageScript -Expression '(()=>{for(const name of ["glow","sparkles"]){const toggle=document.querySelector(`[data-effect="${name}"]`); toggle.checked=true; toggle.dispatchEvent(new Event("change",{bubbles:true}))}const shiny=document.querySelector("[data-shiny-modifier]");shiny.checked=true;shiny.dispatchEvent(new Event("change",{bubbles:true}));document.querySelector("[data-lucio-stage]").scrollIntoView({block:"center"}); return new Promise(resolve=>setTimeout(()=>{for(const animation of document.querySelector("[data-lucio-stage]").getAnimations({subtree:true})){const duration=animation.effect?.getTiming().duration;if(Number.isFinite(duration)&&duration>0){animation.pause();animation.currentTime=duration*.36}} resolve(true)},260))})()' | Out-Null
         Save-CdpScreenshot -Path $ScreenshotPath
     }
 

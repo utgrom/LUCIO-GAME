@@ -60,31 +60,79 @@
               </label>
             </div>
 
+            <label class="shiny-master-toggle">
+              <input type="checkbox" data-shiny-modifier>
+              <span class="shiny-master-icon" aria-hidden="true">✦</span>
+              <span>
+                <strong>Modificador Shiny</strong>
+                <small>Borde, destellos, sweep, rayos y pulsación override</small>
+              </span>
+            </label>
+
             <div class="control-group">
-              <h3>Capas activas</h3>
+              <h3>Capas del material</h3>
               <div class="toggle-grid" data-effect-toggles>
                 <label class="toggle"><input type="checkbox" data-effect="glow">Glow</label>
                 <label class="toggle"><input type="checkbox" data-effect="sparkles">Destellos</label>
                 <label class="toggle"><input type="checkbox" data-effect="diamond">Overlay diamante</label>
                 <label class="toggle"><input type="checkbox" data-effect="cosmic">Overlay cósmico</label>
-                <label class="toggle"><input type="checkbox" data-effect="shiny">Shiny</label>
-                <label class="toggle"><input type="checkbox" data-effect="shinySparkles">Destellos Shiny</label>
-                <label class="toggle"><input type="checkbox" data-effect="shine">Shine sweep</label>
-                <label class="toggle"><input type="checkbox" data-effect="lightning">Rayos</label>
                 <label class="toggle"><input type="checkbox" data-effect="pulse">Pulsación</label>
                 <label class="toggle"><input type="checkbox" data-effect="idle">Idle</label>
               </div>
             </div>
 
-            <div data-lucio-parameter-controls></div>
+            <section class="preset-editor preset-editor--material">
+              <div class="preset-editor-heading">
+                <div><span>Preset por material</span><strong data-material-editor-title>Material</strong></div>
+                <button class="button button--small" type="button" data-reset-material>Reset material</button>
+              </div>
+              <div data-lucio-parameter-controls></div>
+            </section>
+
+            <section class="preset-editor preset-editor--shiny">
+              <div class="preset-editor-heading">
+                <div><span>Preset genérico</span><strong>Modificador Shiny</strong></div>
+                <button class="button button--small" type="button" data-reset-shiny>Reset Shiny</button>
+              </div>
+              <div data-shiny-parameter-controls></div>
+            </section>
 
             <div class="control-group">
               <h3>Preset</h3>
               <div class="button-row">
-                <button class="button button--primary" type="button" data-copy-preset>Copiar preset</button>
-                <button class="button" type="button" data-reset-preset>Restaurar</button>
+                <button class="button" type="button" data-copy-preset>Copiar preset compuesto</button>
               </div>
             </div>
+
+            <section class="preset-library">
+              <div class="preset-library-heading">
+                <div><span>Biblioteca local</span><strong data-library-scope>Versiones</strong></div>
+                <span class="library-status" data-library-status>Sin versiones</span>
+              </div>
+              <label class="field" for="preset-scope-select">
+                <span>Guardar y cargar</span>
+                <select id="preset-scope-select" data-library-scope-select>
+                  <option value="material">Material actual</option>
+                  <option value="shinyModifier">Modificador Shiny</option>
+                </select>
+              </label>
+              <label class="field" for="preset-version-select">
+                <span>Versión guardada</span>
+                <select id="preset-version-select" data-preset-version-select><option value="">Sin versiones guardadas</option></select>
+              </label>
+              <div class="button-row preset-library-actions">
+                <button class="button button--primary" type="button" data-save-version>Guardar versión</button>
+                <button class="button" type="button" data-load-version disabled>Cargar</button>
+                <button class="button" type="button" data-delete-version disabled>Eliminar</button>
+              </div>
+              <div class="button-row preset-document-actions">
+                <button class="button" type="button" data-export-library>Exportar JSON</button>
+                <button class="button" type="button" data-import-library>Importar JSON</button>
+                <button class="button button--danger" type="button" data-reset-all>Reset global</button>
+                <input class="sr-only" type="file" accept="application/json,.json" data-import-file>
+              </div>
+              <p class="library-help">Cada material y el modificador Shiny mantienen historiales independientes.</p>
+            </section>
           </aside>
 
           <div class="performance-panel">

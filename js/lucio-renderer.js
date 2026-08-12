@@ -8,14 +8,19 @@
     return JSON.parse(JSON.stringify(value));
   }
 
-  function mergePreset(material, override) {
+  function mergePreset(material, override, isShiny = false) {
     const base = deepClone(config.visualPresets[material]);
     const shared = deepClone(config.visualPresets.shared);
+    const shinyModifier = deepClone(config.visualPresets.shinyModifier);
     const merged = Object.assign({}, base, shared, override || {});
     ["glow", "sparkles", "shine", "lightning", "idle", "pulse", "specialOverlay", "shiny"].forEach((key) => {
-      merged[key] = Object.assign({}, base[key] || shared[key] || {}, override?.[key] || {});
+      const shinyDefault = key === "pulse" && !isShiny ? {} : shinyModifier[key] || {};
+      merged[key] = Object.assign({}, base[key] || shared[key] || shinyDefault, override?.[key] || {});
     });
-    merged.shiny = Object.assign({}, deepClone(config.visualPresets.shiny), override?.shiny || {});
+    merged.shiny = Object.assign({}, shinyModifier.shiny, override?.shiny || {});
+    merged.shine = Object.assign({}, shinyModifier.shine, override?.shine || {});
+    merged.lightning = Object.assign({}, shinyModifier.lightning, override?.lightning || {});
+    if (isShiny) merged.pulse = Object.assign({}, shinyModifier.pulse, override?.pulse || {});
     return merged;
   }
 
@@ -162,8 +167,8 @@
       if (!lucio?.sprite) throw new Error(`Variante de Lucio desconocida: ${material}`);
 
       const effects = Object.assign({}, config.defaultEffects[material], this.options.effects || {});
-      const preset = mergePreset(material, this.options.preset);
       const isShiny = Boolean(this.options.shiny || effects.shiny);
+      const preset = mergePreset(material, this.options.preset, isShiny);
       const shinyKey = `${material}Shiny`;
       const label = isShiny ? config.lucios[shinyKey].label : `Lucio ${lucio.label}`;
 

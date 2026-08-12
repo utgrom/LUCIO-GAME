@@ -3,7 +3,7 @@
 
   const config = window.GAME_CONFIG;
 
-  const lucioControlDefinitions = [
+  const materialControlDefinitions = [
     { title: "Glow", fields: [
       { path: "glow.color", label: "Color", type: "color" },
       { path: "glow.size", label: "Tamaño", min: 0, max: 70, step: 1, unit: "px" },
@@ -20,6 +20,27 @@
       { path: "sparkles.offsetX", label: "Offset X", min: -50, max: 50, step: 1, unit: "px" },
       { path: "sparkles.offsetY", label: "Offset Y", min: -50, max: 50, step: 1, unit: "px" },
     ]},
+    { title: "Idle", fields: [
+      { path: "idle.amplitude", label: "Amplitud", min: 0, max: 22, step: 1, unit: "px" },
+      { path: "idle.speed", label: "Velocidad", min: 0.5, max: 8, step: 0.1, unit: "s" },
+      { path: "idle.rotation", label: "Rotación", min: 0, max: 5, step: 0.1, unit: "°" },
+      { path: "idle.scale", label: "Escala", min: 1, max: 1.08, step: 0.001 },
+    ]},
+    { title: "Pulsación base", fields: [
+      { path: "pulse.speed", label: "Velocidad", min: 0.3, max: 7, step: 0.05, unit: "s" },
+      { path: "pulse.intensity", label: "Intensidad", min: 0, max: 0.8, step: 0.01 },
+      { path: "pulse.scale", label: "Escala", min: 1, max: 1.12, step: 0.002 },
+    ]},
+    { title: "Overlays especiales", fields: [
+      { path: "specialOverlay.scale", label: "Escala", min: 0.7, max: 1.4, step: 0.01 },
+      { path: "specialOverlay.opacity", label: "Opacidad", min: 0, max: 1, step: 0.01 },
+      { path: "specialOverlay.rotation", label: "Rotación", min: -15, max: 15, step: 0.5, unit: "°" },
+      { path: "specialOverlay.offsetX", label: "Offset X", min: -50, max: 50, step: 1, unit: "px" },
+      { path: "specialOverlay.offsetY", label: "Offset Y", min: -50, max: 50, step: 1, unit: "px" },
+    ]},
+  ];
+
+  const shinyControlDefinitions = [
     { title: "Shiny", fields: [
       { path: "shiny.brightness", label: "Brillo base", min: 1, max: 1.8, step: 0.01 },
       { path: "shiny.glowBoost", label: "Boost del borde", min: 0, max: 0.7, step: 0.01 },
@@ -45,23 +66,10 @@
       { path: "lightning.frequency", label: "Frecuencia", min: 0.4, max: 7, step: 0.1, unit: "s" },
       { path: "lightning.opacity", label: "Opacidad", min: 0, max: 1, step: 0.01 },
     ]},
-    { title: "Idle", fields: [
-      { path: "idle.amplitude", label: "Amplitud", min: 0, max: 22, step: 1, unit: "px" },
-      { path: "idle.speed", label: "Velocidad", min: 0.5, max: 8, step: 0.1, unit: "s" },
-      { path: "idle.rotation", label: "Rotación", min: 0, max: 5, step: 0.1, unit: "°" },
-      { path: "idle.scale", label: "Escala", min: 1, max: 1.08, step: 0.001 },
-    ]},
-    { title: "Pulsación", fields: [
+    { title: "Override de pulsación", fields: [
       { path: "pulse.speed", label: "Velocidad", min: 0.3, max: 7, step: 0.05, unit: "s" },
       { path: "pulse.intensity", label: "Intensidad", min: 0, max: 0.8, step: 0.01 },
       { path: "pulse.scale", label: "Escala", min: 1, max: 1.12, step: 0.002 },
-    ]},
-    { title: "Overlays especiales", fields: [
-      { path: "specialOverlay.scale", label: "Escala", min: 0.7, max: 1.4, step: 0.01 },
-      { path: "specialOverlay.opacity", label: "Opacidad", min: 0, max: 1, step: 0.01 },
-      { path: "specialOverlay.rotation", label: "Rotación", min: -15, max: 15, step: 0.5, unit: "°" },
-      { path: "specialOverlay.offsetX", label: "Offset X", min: -50, max: 50, step: 1, unit: "px" },
-      { path: "specialOverlay.offsetY", label: "Offset Y", min: -50, max: 50, step: 1, unit: "px" },
     ]},
   ];
 
@@ -115,12 +123,24 @@
     return `${display}${unit}`;
   }
 
-  function makeControlGroup(definition, values, onInput) {
+  function makeControlGroup(definition, values, onInput, onReset) {
     const group = document.createElement("div");
     group.className = "control-group";
     const title = document.createElement("h3");
     title.textContent = definition.title;
-    group.appendChild(title);
+    if (onReset) {
+      const heading = document.createElement("div");
+      heading.className = "control-group-heading";
+      const reset = document.createElement("button");
+      reset.className = "layer-reset";
+      reset.type = "button";
+      reset.textContent = "Reset capa";
+      reset.addEventListener("click", onReset);
+      heading.append(title, reset);
+      group.appendChild(heading);
+    } else {
+      group.appendChild(title);
+    }
 
     const columns = document.createElement("div");
     columns.className = definition.fields.length > 3 ? "control-columns" : "";
@@ -180,13 +200,31 @@
   const materialSelect = document.querySelector("[data-lucio-material]");
   const lucioStage = document.querySelector("[data-lucio-stage]");
   const parameterHost = document.querySelector("[data-lucio-parameter-controls]");
+  const shinyParameterHost = document.querySelector("[data-shiny-parameter-controls]");
+  const shinyModifierInput = document.querySelector("[data-shiny-modifier]");
   const effectInputs = Array.from(document.querySelectorAll("[data-effect]"));
   const performanceGrid = document.querySelector("[data-performance-grid]");
   const performanceCopy = document.querySelector("[data-performance-copy]");
   const performanceContextSelect = document.querySelector("[data-performance-context]");
+  const materialEditorTitle = document.querySelector("[data-material-editor-title]");
+  const libraryScope = document.querySelector("[data-library-scope]");
+  const libraryScopeSelect = document.querySelector("[data-library-scope-select]");
+  const libraryStatus = document.querySelector("[data-library-status]");
+  const versionSelect = document.querySelector("[data-preset-version-select]");
+  const loadVersionButton = document.querySelector("[data-load-version]");
+  const deleteVersionButton = document.querySelector("[data-delete-version]");
+  const importFile = document.querySelector("[data-import-file]");
+  const STORAGE_KEY = "lucioFxPresetLibrary.v1";
+  const MATERIAL_EFFECT_KEYS = ["glow", "sparkles", "diamond", "cosmic", "pulse", "idle"];
   let material = materialSelect.value;
-  let runtimePreset = window.LucioPreset.merge(material);
-  let runtimeEffects = clone(config.defaultEffects[material]);
+  let materialDrafts = Object.fromEntries(config.lucioOrder.map((key) => [key, createMaterialDefault(key)]));
+  let materialEffectDrafts = Object.fromEntries(config.lucioOrder.map((key) => [key, pickMaterialEffects(config.defaultEffects[key])]));
+  let shinyDraft = createShinyDefault();
+  let shinyEnabled = false;
+  let runtimePreset = composeRuntimePreset(material);
+  let runtimeEffects = composeRuntimeEffects();
+  let activeLibraryScope = material;
+  let presetLibrary = loadPresetLibrary();
   let performanceCount = 1;
   let performanceRenderers = [];
   let collectionValues = clone(config.collection);
@@ -199,16 +237,99 @@
     preset: runtimePreset,
   }).mount(lucioStage);
 
+  function createMaterialDefault(materialKey) {
+    const merged = window.LucioPreset.merge(materialKey, {}, false);
+    return Object.fromEntries(["glow", "sparkles", "idle", "pulse", "specialOverlay"].map((key) => [key, clone(merged[key])]));
+  }
+
+  function createShinyDefault() {
+    return clone(config.visualPresets.shinyModifier);
+  }
+
+  function composeRuntimePreset(materialKey = material) {
+    const composed = Object.assign({}, clone(materialDrafts[materialKey]), clone(shinyDraft));
+    composed.pulse = clone(shinyEnabled ? shinyDraft.pulse : materialDrafts[materialKey].pulse);
+    return composed;
+  }
+
+  function pickMaterialEffects(effects) {
+    return Object.fromEntries(MATERIAL_EFFECT_KEYS.map((key) => [key, Boolean(effects[key])]));
+  }
+
+  function composeRuntimeEffects() {
+    return Object.assign({}, clone(materialEffectDrafts[material]), {
+      shiny: shinyEnabled,
+      shinySparkles: shinyEnabled,
+      shine: shinyEnabled,
+      lightning: shinyEnabled,
+      pulse: shinyEnabled ? true : Boolean(materialEffectDrafts[material].pulse),
+    });
+  }
+
+  function applyShinyEffects() {
+    runtimeEffects = composeRuntimeEffects();
+    runtimePreset = composeRuntimePreset();
+  }
+
+  function loadPresetLibrary() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      return parsed?.schemaVersion === 1 && parsed.materials && Array.isArray(parsed.shinyModifier) ? parsed : emptyPresetLibrary();
+    } catch (_) {
+      return emptyPresetLibrary();
+    }
+  }
+
+  function emptyPresetLibrary() {
+    return { schemaVersion: 1, materials: Object.fromEntries(config.lucioOrder.map((key) => [key, []])), shinyModifier: [] };
+  }
+
+  function persistPresetLibrary() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(presetLibrary));
+  }
+
+  function currentVersions() {
+    return activeLibraryScope === "shinyModifier" ? presetLibrary.shinyModifier : presetLibrary.materials[activeLibraryScope];
+  }
+
   function syncEffectInputs() {
-    effectInputs.forEach((input) => { input.checked = Boolean(runtimeEffects[input.dataset.effect]); });
+    effectInputs.forEach((input) => { input.checked = Boolean(materialEffectDrafts[material][input.dataset.effect]); });
+    shinyModifierInput.checked = shinyEnabled;
   }
 
   function renderLucioControls() {
     parameterHost.replaceChildren();
-    lucioControlDefinitions.forEach((definition) => {
-      parameterHost.appendChild(makeControlGroup(definition, runtimePreset, (path, value) => {
-        setPath(runtimePreset, path, value);
+    materialControlDefinitions.forEach((definition) => {
+      const layerKey = definition.fields[0].path.split(".")[0];
+      parameterHost.appendChild(makeControlGroup(definition, materialDrafts[material], (path, value) => {
+        setPath(materialDrafts[material], path, value);
+        runtimePreset = composeRuntimePreset();
         refreshLucios(false);
+      }, () => {
+        materialDrafts[material][layerKey] = createMaterialDefault(material)[layerKey];
+        runtimePreset = composeRuntimePreset();
+        renderLucioControls();
+        refreshLucios(false);
+        showToast(`${definition.title} restaurado para ${config.lucios[material].label}.`);
+      }));
+    });
+    materialEditorTitle.textContent = config.lucios[material].label;
+  }
+
+  function renderShinyControls() {
+    shinyParameterHost.replaceChildren();
+    shinyControlDefinitions.forEach((definition) => {
+      const layerKey = definition.fields[0].path.split(".")[0];
+      shinyParameterHost.appendChild(makeControlGroup(definition, shinyDraft, (path, value) => {
+        setPath(shinyDraft, path, value);
+        runtimePreset = composeRuntimePreset();
+        refreshLucios(false);
+      }, () => {
+        shinyDraft[layerKey] = createShinyDefault()[layerKey];
+        runtimePreset = composeRuntimePreset();
+        renderShinyControls();
+        refreshLucios(false);
+        showToast(`${definition.title} restaurado en Shiny.`);
       }));
     });
   }
@@ -216,12 +337,12 @@
   function refreshLucios(rebuildPerformance = true) {
     heroRenderer.update({
       variant: material,
-      shiny: runtimeEffects.shiny,
+      shiny: shinyEnabled,
       effects: runtimeEffects,
       preset: runtimePreset,
     });
     if (rebuildPerformance) renderPerformance(performanceCount);
-    else performanceRenderers.forEach((renderer) => renderer.update({ preset: runtimePreset, effects: runtimeEffects, shiny: runtimeEffects.shiny }));
+    else performanceRenderers.forEach((renderer) => renderer.update({ preset: runtimePreset, effects: runtimeEffects, shiny: shinyEnabled }));
   }
 
   function renderPerformance(count) {
@@ -233,7 +354,7 @@
     performanceGrid.dataset.total = count;
     const header = document.createElement("div");
     header.className = "collection-demo-head";
-    const rewardName = runtimeEffects.shiny ? `${material}Shiny` : material;
+    const rewardName = shinyEnabled ? `${material}Shiny` : material;
     header.innerHTML = `<strong>LUCIO ${config.lucios[rewardName].label.toUpperCase()}</strong><span>×${count}</span>`;
     const track = document.createElement("div");
     track.className = "collection-demo-track";
@@ -241,7 +362,7 @@
     for (let index = 0; index < visibleCount; index += 1) {
       const renderer = window.createLucioRenderer({
         variant: material,
-        shiny: runtimeEffects.shiny,
+        shiny: shinyEnabled,
         context,
         effects: runtimeEffects,
         preset: runtimePreset,
@@ -305,25 +426,35 @@
 
   materialSelect.addEventListener("change", () => {
     material = materialSelect.value;
-    runtimePreset = window.LucioPreset.merge(material);
-    runtimeEffects = clone(config.defaultEffects[material]);
+    applyShinyEffects();
     syncEffectInputs();
     renderLucioControls();
+    if (activeLibraryScope !== "shinyModifier") activeLibraryScope = material;
+    renderVersionList();
     refreshLucios();
   });
 
   effectInputs.forEach((input) => {
     input.addEventListener("change", () => {
-      runtimeEffects[input.dataset.effect] = input.checked;
+      materialEffectDrafts[material][input.dataset.effect] = input.checked;
+      applyShinyEffects();
       refreshLucios();
     });
+  });
+
+  shinyModifierInput.addEventListener("change", () => {
+    shinyEnabled = shinyModifierInput.checked;
+    applyShinyEffects();
+    refreshLucios();
   });
 
   document.querySelector("[data-copy-preset]").addEventListener("click", async () => {
     const exportValue = {
       material,
-      effects: runtimeEffects,
-      preset: runtimePreset,
+      materialPreset: materialDrafts[material],
+      materialEffects: materialEffectDrafts[material],
+      shinyEnabled,
+      shinyModifier: shinyDraft,
     };
     const text = JSON.stringify(exportValue, null, 2);
     let copied = false;
@@ -343,13 +474,156 @@
     showToast(copied ? `Preset de ${config.lucios[material].label} copiado.` : "No se pudo acceder al portapapeles.");
   });
 
-  document.querySelector("[data-reset-preset]").addEventListener("click", () => {
-    runtimePreset = window.LucioPreset.merge(material);
-    runtimeEffects = clone(config.defaultEffects[material]);
+  document.querySelector("[data-reset-material]").addEventListener("click", () => {
+    materialDrafts[material] = createMaterialDefault(material);
+    materialEffectDrafts[material] = pickMaterialEffects(config.defaultEffects[material]);
+    applyShinyEffects();
     syncEffectInputs();
     renderLucioControls();
     refreshLucios();
-    showToast("Preset restaurado desde config.js.");
+    showToast(`${config.lucios[material].label} restaurado desde config.js.`);
+  });
+
+  document.querySelector("[data-reset-shiny]").addEventListener("click", () => {
+    shinyDraft = createShinyDefault();
+    runtimePreset = composeRuntimePreset();
+    renderShinyControls();
+    refreshLucios();
+    showToast("Modificador Shiny restaurado desde config.js.");
+  });
+
+  function renderVersionList(preferredId = "") {
+    const versions = currentVersions();
+    versionSelect.replaceChildren();
+    if (!versions.length) {
+      const option = document.createElement("option");
+      option.value = "";
+      option.textContent = "Sin versiones guardadas";
+      versionSelect.appendChild(option);
+    } else {
+      versions.slice().reverse().forEach((version) => {
+        const option = document.createElement("option");
+        option.value = version.id;
+        option.textContent = `${version.name} · ${new Date(version.savedAt).toLocaleString("es")}`;
+        versionSelect.appendChild(option);
+      });
+      versionSelect.value = preferredId && versions.some((version) => version.id === preferredId) ? preferredId : versions[versions.length - 1].id;
+    }
+    const shinyScope = activeLibraryScope === "shinyModifier";
+    libraryScopeSelect.value = shinyScope ? "shinyModifier" : "material";
+    libraryScope.textContent = shinyScope ? "Versiones del Shiny genérico" : `Versiones de ${config.lucios[activeLibraryScope].label}`;
+    libraryStatus.textContent = versions.length ? `${versions.length} ${versions.length === 1 ? "versión" : "versiones"}` : "Sin versiones";
+    loadVersionButton.disabled = !versions.length;
+    deleteVersionButton.disabled = !versions.length;
+  }
+
+  document.querySelector("[data-save-version]").addEventListener("click", () => {
+    const requestedName = window.prompt("Nombre de esta versión:", activeLibraryScope === "shinyModifier" ? "Shiny" : config.lucios[activeLibraryScope].label);
+    if (requestedName === null) return;
+    const shinyScope = activeLibraryScope === "shinyModifier";
+    const versions = currentVersions();
+    const nextNumber = versions.length + 1;
+    const version = {
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      name: requestedName.trim() || (shinyScope ? `Shiny v${nextNumber}` : `${config.lucios[activeLibraryScope].label} v${nextNumber}`),
+      savedAt: new Date().toISOString(),
+      data: clone(shinyScope ? shinyDraft : { preset: materialDrafts[activeLibraryScope], effects: materialEffectDrafts[activeLibraryScope] }),
+    };
+    versions.push(version);
+    persistPresetLibrary();
+    renderVersionList(version.id);
+    showToast(`${version.name} guardada.`);
+  });
+
+  loadVersionButton.addEventListener("click", () => {
+    const version = currentVersions().find((candidate) => candidate.id === versionSelect.value);
+    if (!version) return;
+    if (activeLibraryScope === "shinyModifier") {
+      shinyDraft = clone(version.data);
+      renderShinyControls();
+    } else {
+      materialDrafts[activeLibraryScope] = clone(version.data.preset);
+      materialEffectDrafts[activeLibraryScope] = Object.assign(pickMaterialEffects(config.defaultEffects[activeLibraryScope]), clone(version.data.effects || {}));
+      if (activeLibraryScope === material) {
+        applyShinyEffects();
+        renderLucioControls();
+        syncEffectInputs();
+      }
+    }
+    runtimePreset = composeRuntimePreset();
+    refreshLucios();
+    showToast(`${version.name} cargada.`);
+  });
+
+  deleteVersionButton.addEventListener("click", () => {
+    const versions = currentVersions();
+    const index = versions.findIndex((candidate) => candidate.id === versionSelect.value);
+    if (index < 0) return;
+    const [removed] = versions.splice(index, 1);
+    persistPresetLibrary();
+    renderVersionList();
+    showToast(`${removed.name} eliminada.`);
+  });
+
+  document.querySelector("[data-export-library]").addEventListener("click", () => {
+    const documentValue = {
+      documentType: "lucio-fx-preset-library",
+      schemaVersion: 1,
+      exportedAt: new Date().toISOString(),
+      drafts: { materials: materialDrafts, materialEffects: materialEffectDrafts, shinyModifier: shinyDraft },
+      versions: presetLibrary,
+    };
+    const blob = new Blob([JSON.stringify(documentValue, null, 2)], { type: "application/json" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "lucio-fx-presets.json";
+    link.click();
+    URL.revokeObjectURL(link.href);
+    showToast("Biblioteca exportada como lucio-fx-presets.json.");
+  });
+
+  document.querySelector("[data-import-library]").addEventListener("click", () => importFile.click());
+  importFile.addEventListener("change", async () => {
+    const file = importFile.files[0];
+    if (!file) return;
+    try {
+      const documentValue = JSON.parse(await file.text());
+      if (documentValue.documentType !== "lucio-fx-preset-library" || documentValue.schemaVersion !== 1) throw new Error("Formato incompatible");
+      presetLibrary = documentValue.versions;
+      if (documentValue.drafts?.materials) materialDrafts = clone(documentValue.drafts.materials);
+      if (documentValue.drafts?.materialEffects) materialEffectDrafts = clone(documentValue.drafts.materialEffects);
+      if (documentValue.drafts?.shinyModifier) shinyDraft = clone(documentValue.drafts.shinyModifier);
+      persistPresetLibrary();
+      runtimePreset = composeRuntimePreset();
+      renderLucioControls();
+      renderShinyControls();
+      renderVersionList();
+      refreshLucios();
+      showToast("Biblioteca importada.");
+    } catch (error) {
+      showToast(`No se pudo importar: ${error.message}`);
+    } finally {
+      importFile.value = "";
+    }
+  });
+
+  document.querySelector("[data-reset-all]").addEventListener("click", () => {
+    if (!window.confirm("¿Restaurar todos los materiales y el modificador Shiny a config.js? Las versiones guardadas se conservarán.")) return;
+    materialDrafts = Object.fromEntries(config.lucioOrder.map((key) => [key, createMaterialDefault(key)]));
+    materialEffectDrafts = Object.fromEntries(config.lucioOrder.map((key) => [key, pickMaterialEffects(config.defaultEffects[key])]));
+    shinyDraft = createShinyDefault();
+    shinyEnabled = false;
+    applyShinyEffects();
+    syncEffectInputs();
+    renderLucioControls();
+    renderShinyControls();
+    refreshLucios();
+    showToast("Todos los borradores fueron restaurados. Las versiones siguen guardadas.");
+  });
+
+  libraryScopeSelect.addEventListener("change", () => {
+    activeLibraryScope = libraryScopeSelect.value === "shinyModifier" ? "shinyModifier" : material;
+    renderVersionList();
   });
 
   document.querySelectorAll("[data-count]").forEach((button) => {
@@ -452,6 +726,8 @@
 
   syncEffectInputs();
   renderLucioControls();
+  renderShinyControls();
+  renderVersionList();
   renderPerformance(1);
   renderOpeningControls();
   renderCollectionControls();
