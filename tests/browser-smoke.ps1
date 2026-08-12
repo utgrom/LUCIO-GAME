@@ -155,6 +155,8 @@ try {
     Assert-Equal $sparkleColor '#00ff00' 'color de destellos configurable'
     $shinyLoaded = Invoke-PageScript -Expression '(()=>{const toggle=document.querySelector("[data-effect=''shinySparkles'']"); toggle.checked=true; toggle.dispatchEvent(new Event("change",{bubbles:true})); const image=document.querySelector("[data-lucio-stage] .lucio-overlay--shiny"); return image.complete && image.naturalWidth===1024 && Number(getComputedStyle(image).opacity)>0})()'
     Assert-Equal $shinyLoaded $true 'destellos Shiny como imagen'
+    $shinyEasing = Invoke-PageScript -Expression 'getComputedStyle(document.querySelector("[data-lucio-stage] .lucio-overlay--shiny")).animationTimingFunction'
+    Assert-Equal $shinyEasing 'ease-in-out' 'movimiento Shiny suavizado'
     $shinyColor = Invoke-PageScript -Expression '(()=>{const input=document.querySelector("[data-path=''shiny.sparkleColor'']"); input.value="#ff0000"; input.dispatchEvent(new Event("input",{bubbles:true})); return document.querySelector("[data-lucio-stage] .lucio-shiny-flood").getAttribute("flood-color")})()'
     Assert-Equal $shinyColor '#ff0000' 'color de destellos Shiny configurable'
 
