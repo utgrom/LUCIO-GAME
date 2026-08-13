@@ -194,11 +194,11 @@ try {
 
     $timingNormalBronze = Invoke-PageScript -Expression 'window.resolveRewardTimings(GAME_CONFIG.opening,{material:"bronze",shiny:false})'
     Assert-Equal $timingNormalBronze.riseDuration 1400 'timing normal Bronce subida'
-    Assert-Equal $timingNormalBronze.revealDuration 15000 'timing normal Bronce reveal'
+    Assert-Equal $timingNormalBronze.revealDuration 1500 'timing normal Bronce reveal'
     Assert-Equal $timingNormalBronze.mysterySwapPoint 0.35 'timing normal Bronce cambio'
     $timingNormalRuby = Invoke-PageScript -Expression 'window.resolveRewardTimings(GAME_CONFIG.opening,{material:"ruby",shiny:false})'
     Assert-Equal $timingNormalRuby.riseDuration 1400 'timing normal Rubi subida'
-    Assert-Equal $timingNormalRuby.revealDuration 15000 'timing normal Rubi reveal'
+    Assert-Equal $timingNormalRuby.revealDuration 1500 'timing normal Rubi reveal'
     Assert-Equal $timingNormalRuby.mysterySwapPoint 0.65 'timing normal Rubi cambio'
     $timingShinyRuby = Invoke-PageScript -Expression 'window.resolveRewardTimings(GAME_CONFIG.opening,{material:"ruby",shiny:true})'
     Assert-Equal $timingShinyRuby.riseDuration 2400 'timing Shiny Rubi subida'
@@ -229,6 +229,11 @@ try {
     Assert-Equal $state 'reward-visible' 'reward exige confirmacion'
     $state = Invoke-PageScript -Expression "document.querySelector('[data-confirm]').click(); document.querySelector('[data-opening-stage]').dataset.state"
     Assert-Equal $state 'idle' 'confirmacion reinicia'
+
+    $normalAutoReveal = Invoke-PageScript -Expression '(()=>{const reward=document.querySelector("[data-reward-select]");reward.value="bronze";reward.dispatchEvent(new Event("change",{bubbles:true}));document.querySelector("[data-start-opening]").click();const stage=document.querySelector("[data-opening-stage]");stage.dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,cancelable:true}));for(let i=0;i<3;i++)stage.dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,cancelable:true}));stage.dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,cancelable:true}));return new Promise(resolve=>setTimeout(()=>resolve(stage.dataset.state),1700))})()'
+    Assert-Equal $normalAutoReveal 'reward-visible' 'reveal normal avanza automaticamente'
+    $state = Invoke-PageScript -Expression 'document.querySelector("[data-confirm]").click();const reward=document.querySelector("[data-reward-select]");reward.value="cosmicShiny";reward.dispatchEvent(new Event("change",{bubbles:true}));document.querySelector("[data-opening-stage]").dataset.state'
+    Assert-Equal $state 'idle' 'prueba automatica reinicia'
 
     $count = Invoke-PageScript -Expression 'document.querySelector("[data-count=''50'']").click(); document.querySelector("[data-performance-grid]").dataset.total'
     Assert-Equal $count '50' 'coleccion representa 50 copias'

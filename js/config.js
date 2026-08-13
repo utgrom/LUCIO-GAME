@@ -173,7 +173,7 @@
       mysteryFadeDuration: 480,
       rewardTimingOverrides: {
         normal: {
-          default: { riseDuration: 1400, revealDuration: 15000, mysterySwapPoint: 0.35 },
+          default: { riseDuration: 1400, revealDuration: 1500, mysterySwapPoint: 0.35 },
           ruby: { mysterySwapPoint: 0.65 },
           diamond: { mysterySwapPoint: 0.65 },
           cosmic: { mysterySwapPoint: 0.65 },
