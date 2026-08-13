@@ -47,6 +47,15 @@
     return { material, shiny };
   }
 
+  function resolveRewardTimings(baseTimings, reward) {
+    const base = Object.assign({}, baseTimings);
+    delete base.rewardTimingOverrides;
+    if (!reward) return base;
+    const groups = baseTimings.rewardTimingOverrides || {};
+    const group = reward.shiny ? groups.shiny : groups.normal;
+    return Object.assign(base, group?.default || {}, group?.[reward.material] || {});
+  }
+
   class OpeningSequence {
     constructor(root, options = {}) {
       this.root = root;
@@ -154,6 +163,7 @@
       if (this.state !== OPENING_STATES.IDLE) this.reset();
       this.sequenceId += 1;
       this.reward = parseReward(this.options.reward, this.options.backpack);
+      this.applyTimings(resolveRewardTimings(this.options.timings, this.reward));
       this.taps = 0;
       this.prepareRewardRenderer();
       this.tapDots.forEach((dot) => dot.classList.remove("is-hit"));
@@ -180,7 +190,7 @@
       }).mount(mysteryLayer);
       const effects = Object.assign({}, config.defaultEffects[this.reward.material]);
       if (this.reward.shiny) {
-        Object.assign(effects, { shiny: true, shinySparkles: true, shine: true, lightning: true, pulse: true });
+        Object.assign(effects, { shiny: true, shinySparkles: true, shine: true, pulse: true });
       }
       this.rewardRenderer = window.createLucioRenderer({
         variant: this.reward.material,
@@ -360,4 +370,5 @@
   window.OPENING_STATES = OPENING_STATES;
   window.OpeningSequence = OpeningSequence;
   window.rollBackpackReward = rollReward;
+  window.resolveRewardTimings = resolveRewardTimings;
 })();

@@ -61,11 +61,6 @@
       { path: "shine.intensity", label: "Intensidad", min: 0, max: 1.5, step: 0.01 },
       { path: "shine.frequency", label: "Frecuencia", min: 0.3, max: 8, step: 0.1, unit: "s" },
     ]},
-    { title: "Rayos", fields: [
-      { path: "lightning.intensity", label: "Intensidad", min: 0, max: 1.5, step: 0.01 },
-      { path: "lightning.frequency", label: "Frecuencia", min: 0.4, max: 7, step: 0.1, unit: "s" },
-      { path: "lightning.opacity", label: "Opacidad", min: 0, max: 1, step: 0.01 },
-    ]},
     { title: "Override de pulsación", fields: [
       { path: "pulse.speed", label: "Velocidad", min: 0.3, max: 7, step: 0.05, unit: "s" },
       { path: "pulse.intensity", label: "Intensidad", min: 0, max: 0.8, step: 0.01 },
@@ -261,7 +256,6 @@
       shiny: shinyEnabled,
       shinySparkles: shinyEnabled,
       shine: shinyEnabled,
-      lightning: shinyEnabled,
       pulse: shinyEnabled ? true : Boolean(materialEffectDrafts[material].pulse),
     });
   }
@@ -691,6 +685,7 @@
     const definition = { title: "Parámetros de apertura", fields: openingControlDefinitions };
     openingParameters.appendChild(makeControlGroup(definition, openingValues, (path, value) => {
       openingValues[path] = value;
+      openingSequence.options.timings = openingValues;
       openingSequence.applyTimings(openingValues);
     }));
   }

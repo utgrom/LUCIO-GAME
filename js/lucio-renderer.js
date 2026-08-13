@@ -13,13 +13,12 @@
     const shared = deepClone(config.visualPresets.shared);
     const shinyModifier = deepClone(config.visualPresets.shinyModifier);
     const merged = Object.assign({}, base, shared, override || {});
-    ["glow", "sparkles", "shine", "lightning", "idle", "pulse", "specialOverlay", "shiny"].forEach((key) => {
+    ["glow", "sparkles", "shine", "idle", "pulse", "specialOverlay", "shiny"].forEach((key) => {
       const shinyDefault = key === "pulse" && !isShiny ? {} : shinyModifier[key] || {};
       merged[key] = Object.assign({}, base[key] || shared[key] || shinyDefault, override?.[key] || {});
     });
     merged.shiny = Object.assign({}, shinyModifier.shiny, override?.shiny || {});
     merged.shine = Object.assign({}, shinyModifier.shine, override?.shine || {});
-    merged.lightning = Object.assign({}, shinyModifier.lightning, override?.lightning || {});
     if (isShiny) merged.pulse = Object.assign({}, shinyModifier.pulse, override?.pulse || {});
     return merged;
   }
@@ -65,9 +64,6 @@
       "--shine-slant": `${shineSlant}%`,
       "--shine-intensity": preset.shine.intensity,
       "--shine-frequency": `${preset.shine.frequency}s`,
-      "--lightning-intensity": preset.lightning.intensity,
-      "--lightning-frequency": `${preset.lightning.frequency}s`,
-      "--lightning-opacity": preset.lightning.opacity,
       "--idle-amplitude": `${preset.idle.amplitude}px`,
       "--idle-speed": `${preset.idle.speed}s`,
       "--idle-rotation": `${preset.idle.rotation}deg`,
@@ -137,7 +133,6 @@
               <img class="lucio-overlay lucio-overlay--cosmic" draggable="false" alt="" aria-hidden="true">
               <img class="lucio-overlay lucio-overlay--shiny" draggable="false" alt="" aria-hidden="true">
               <div class="lucio-shine" aria-hidden="true"><img draggable="false" alt=""></div>
-              <div class="lucio-lightning" aria-hidden="true"><i></i><i></i><i></i></div>
             </div>
           </div>
         </div>
@@ -181,7 +176,6 @@
       this.element.classList.toggle("has-cosmic", Boolean(effects.cosmic));
       this.element.classList.toggle("has-shiny-sparkles", Boolean(effects.shinySparkles));
       this.element.classList.toggle("has-shine", Boolean(effects.shine));
-      this.element.classList.toggle("has-lightning", Boolean(effects.lightning));
       this.element.classList.toggle("has-pulse", Boolean(effects.pulse));
       this.element.classList.toggle("has-idle", Boolean(effects.idle));
       this.element.style.setProperty("--instance-delay", `${this.options.delay || 0}s`);

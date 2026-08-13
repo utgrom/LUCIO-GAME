@@ -16,8 +16,7 @@
 .lucio-art,
 .lucio-shiny-rim,
 .lucio-overlay,
-.lucio-shine,
-.lucio-lightning {
+.lucio-shine {
   position: absolute;
   inset: 0;
 }
@@ -174,37 +173,8 @@
   animation-delay: var(--instance-delay);
 }
 
-.lucio-lightning {
-  z-index: 7;
-  opacity: 0;
-  filter: drop-shadow(0 0 5px #c4f7ff) drop-shadow(0 0 10px var(--glow-color));
-  pointer-events: none;
-}
-
-.lucio-lightning i {
-  position: absolute;
-  display: block;
-  width: 2px;
-  height: 31%;
-  background: linear-gradient(180deg, transparent, #fff 12%, #9ef7ff 52%, transparent);
-  clip-path: polygon(35% 0, 100% 0, 62% 44%, 100% 44%, 0 100%, 38% 55%, 0 55%);
-}
-
-.lucio-lightning i:nth-child(1) { left: 25%; top: 13%; transform: rotate(14deg); }
-.lucio-lightning i:nth-child(2) { right: 23%; top: 29%; height: 38%; transform: rotate(-11deg); }
-.lucio-lightning i:nth-child(3) { left: 41%; bottom: 5%; height: 24%; transform: rotate(8deg); }
-
-.lucio-renderer.has-lightning .lucio-lightning {
-  opacity: calc(var(--lightning-opacity) * var(--lightning-intensity));
-  animation: lightning-flicker var(--lightning-frequency) steps(1, end) infinite;
-}
-
 .lucio-renderer.has-pulse .lucio-art {
   animation: lucio-pulse var(--pulse-speed) ease-in-out infinite;
-}
-
-.lucio-renderer[data-context="collection"] .lucio-lightning {
-  display: none;
 }
 
 .lucio-renderer[data-context="collection"].has-glow .lucio-sprite {
@@ -256,11 +226,6 @@
       calc(115% + var(--shine-slant)) 100%
     );
   }
-}
-
-@keyframes lightning-flicker {
-  0%, 14%, 18%, 62%, 66%, 100% { visibility: hidden; transform: scaleX(0.65); }
-  15%, 17%, 63%, 65% { visibility: visible; transform: scaleX(1); }
 }
 
 @keyframes lucio-pulse {

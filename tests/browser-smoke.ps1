@@ -1,6 +1,7 @@
 param(
     [string]$Url = 'http://127.0.0.1:8765/playground.html',
     [string]$ScreenshotPath = '',
+    [string]$RubyScreenshotPath = '',
     [string]$OpeningScreenshotPath = '',
     [string]$RewardScreenshotPath = ''
 )
@@ -143,6 +144,24 @@ try {
     $paintOverflow = Invoke-PageScript -Expression 'getComputedStyle(document.querySelector(".lucio-renderer")).overflow'
     Assert-Equal $paintOverflow 'visible' 'canvas visual sin recorte'
 
+    $shinyDefaults = Invoke-PageScript -Expression 'JSON.stringify(GAME_CONFIG.visualPresets.shinyModifier)'
+    $expectedShinyDefaults = '{"shiny":{"glowBoost":0.35,"brightness":1.12,"rimOpacity":0.86,"rimSize":16,"sparkleColor":"#ffffff","overlayOpacity":0.9,"overlayScale":1.04,"overlaySpeed":1.75,"rotation":0,"offsetX":0,"offsetY":0},"shine":{"width":11,"speed":1.1,"angle":-42,"intensity":0.85,"frequency":3.8},"pulse":{"speed":1.35,"intensity":0.5,"scale":1.035}}'
+    Assert-Equal $shinyDefaults $expectedShinyDefaults 'preset Shiny exacto y sin rayos'
+
+    $openingDefaults = Invoke-PageScript -Expression 'JSON.stringify(Object.fromEntries(["entryDuration","shakeStrength","shakeDuration","shakeRotation","impactScale","flashDuration","flashIntensity","openingDuration","lucioDelay","riseDuration","riseDistance","finalBounce","revealDuration","mysterySwapPoint","mysteryFadeDuration"].map(key=>[key,GAME_CONFIG.opening[key]])))'
+    $expectedOpeningDefaults = '{"entryDuration":760,"shakeStrength":16,"shakeDuration":310,"shakeRotation":5,"impactScale":1.08,"flashDuration":660,"flashIntensity":0.85,"openingDuration":650,"lucioDelay":680,"riseDuration":850,"riseDistance":30,"finalBounce":1.15,"revealDuration":1400,"mysterySwapPoint":0.35,"mysteryFadeDuration":480}'
+    Assert-Equal $openingDefaults $expectedOpeningDefaults 'preset base de mochila exacto'
+
+    $allSpritesLoaded = Invoke-PageScript -Expression '(()=>{const select=document.querySelector("[data-lucio-material]");const result={};for(const material of ["bronze","silver","gold","ruby","diamond","cosmic"]){select.value=material;select.dispatchEvent(new Event("change",{bubbles:true}));const image=document.querySelector("[data-lucio-stage] .lucio-sprite");result[material]={file:image.src.split("/").pop(),complete:image.complete,width:image.naturalWidth,height:image.naturalHeight,opacity:getComputedStyle(image).opacity,visibility:getComputedStyle(image).visibility}}return result})()'
+    Assert-Equal $allSpritesLoaded.bronze.width 1024 'sprite Bronce cargado'
+    Assert-Equal $allSpritesLoaded.silver.width 1024 'sprite Plata cargado'
+    Assert-Equal $allSpritesLoaded.gold.width 1024 'sprite Oro cargado'
+    Assert-Equal $allSpritesLoaded.ruby.width 1024 'sprite Rubi cargado'
+    Assert-Equal $allSpritesLoaded.ruby.file 'LucioRuby.png' 'ruta del sprite Rubi'
+    Assert-Equal $allSpritesLoaded.ruby.opacity '1' 'opacidad del sprite Rubi'
+    Assert-Equal $allSpritesLoaded.diamond.width 1024 'sprite Diamante cargado'
+    Assert-Equal $allSpritesLoaded.cosmic.width 1024 'sprite Cosmico cargado'
+
     $shinyClass = Invoke-PageScript -Expression '(()=>{const toggle=document.querySelector("[data-shiny-modifier]"); toggle.checked=true; toggle.dispatchEvent(new Event("change",{bubbles:true})); return document.querySelector("[data-lucio-stage] .lucio-renderer").classList.contains("is-shiny")})()'
     Assert-Equal $shinyClass $true 'toggle Shiny visible'
     $shineAnimation = Invoke-PageScript -Expression 'getComputedStyle(document.querySelector("[data-lucio-stage] .lucio-shine img")).animationName'
@@ -173,8 +192,25 @@ try {
     $libraryStored = Invoke-PageScript -Expression '(()=>{const data=JSON.parse(localStorage.getItem("lucioFxPresetLibrary.v1"));return data.materials.cosmic.length===1&&data.shinyModifier.length===1})()'
     Assert-Equal $libraryStored $true 'biblioteca separa materiales y Shiny'
 
+    $timingNormalBronze = Invoke-PageScript -Expression 'window.resolveRewardTimings(GAME_CONFIG.opening,{material:"bronze",shiny:false})'
+    Assert-Equal $timingNormalBronze.riseDuration 1400 'timing normal Bronce subida'
+    Assert-Equal $timingNormalBronze.revealDuration 15000 'timing normal Bronce reveal'
+    Assert-Equal $timingNormalBronze.mysterySwapPoint 0.35 'timing normal Bronce cambio'
+    $timingNormalRuby = Invoke-PageScript -Expression 'window.resolveRewardTimings(GAME_CONFIG.opening,{material:"ruby",shiny:false})'
+    Assert-Equal $timingNormalRuby.riseDuration 1400 'timing normal Rubi subida'
+    Assert-Equal $timingNormalRuby.revealDuration 15000 'timing normal Rubi reveal'
+    Assert-Equal $timingNormalRuby.mysterySwapPoint 0.65 'timing normal Rubi cambio'
+    $timingShinyRuby = Invoke-PageScript -Expression 'window.resolveRewardTimings(GAME_CONFIG.opening,{material:"ruby",shiny:true})'
+    Assert-Equal $timingShinyRuby.riseDuration 2400 'timing Shiny Rubi subida'
+    Assert-Equal $timingShinyRuby.revealDuration 3000 'timing Shiny Rubi reveal'
+    Assert-Equal $timingShinyRuby.mysterySwapPoint 0.65 'timing Shiny Rubi cambio'
+    $timingShinyDiamond = Invoke-PageScript -Expression 'window.resolveRewardTimings(GAME_CONFIG.opening,{material:"diamond",shiny:true})'
+    Assert-Equal $timingShinyDiamond.mysterySwapPoint 0.95 'timing Shiny Diamante cambio'
+
     $state = Invoke-PageScript -Expression "document.querySelector('[data-start-opening]').click(); document.querySelector('[data-opening-stage]').dataset.state"
     Assert-Equal $state 'entering' 'inicio determinista'
+    $liveRiseDuration = Invoke-PageScript -Expression 'document.querySelector("[data-opening-stage]").style.getPropertyValue("--rise-duration")'
+    Assert-Equal $liveRiseDuration '2400ms' 'timing del drop aplicado antes de animar'
     $mystery = Invoke-PageScript -Expression 'document.querySelector(".reward-layer--mystery .lucio-sprite").src.includes("LucioMistery.png")'
     Assert-Equal $mystery $true 'Lucio Mistery preparado'
     $rewardGeometry = Invoke-PageScript -Expression '(()=>{const slot=document.querySelector("[data-reward-slot]").getBoundingClientRect(); return Math.abs(slot.height/slot.width-1.5)<0.02})()'
@@ -209,6 +245,11 @@ try {
     if ($ScreenshotPath) {
         Invoke-PageScript -Expression '(()=>{for(const name of ["glow","sparkles"]){const toggle=document.querySelector(`[data-effect="${name}"]`); toggle.checked=true; toggle.dispatchEvent(new Event("change",{bubbles:true}))}const shiny=document.querySelector("[data-shiny-modifier]");shiny.checked=true;shiny.dispatchEvent(new Event("change",{bubbles:true}));document.querySelector("[data-lucio-stage]").scrollIntoView({block:"center"}); return new Promise(resolve=>setTimeout(()=>{for(const animation of document.querySelector("[data-lucio-stage]").getAnimations({subtree:true})){const duration=animation.effect?.getTiming().duration;if(Number.isFinite(duration)&&duration>0){animation.pause();animation.currentTime=duration*.36}} resolve(true)},260))})()' | Out-Null
         Save-CdpScreenshot -Path $ScreenshotPath
+    }
+
+    if ($RubyScreenshotPath) {
+        Invoke-PageScript -Expression '(()=>{const select=document.querySelector("[data-lucio-material]");select.value="ruby";select.dispatchEvent(new Event("change",{bubbles:true}));const shiny=document.querySelector("[data-shiny-modifier]");shiny.checked=true;shiny.dispatchEvent(new Event("change",{bubbles:true}));document.querySelector("[data-lucio-stage]").scrollIntoView({block:"center",behavior:"instant"});return new Promise(resolve=>setTimeout(resolve,320))})()' | Out-Null
+        Save-CdpScreenshot -Path $RubyScreenshotPath
     }
 
     if ($OpeningScreenshotPath -or $RewardScreenshotPath) {
