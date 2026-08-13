@@ -2,9 +2,12 @@
   "use strict";
 
   const lucioOrder = ["bronze", "silver", "gold", "ruby", "diamond", "cosmic"];
+  const collectionOrder = [...lucioOrder, ...lucioOrder.map((material) => `${material}Shiny`)];
 
   const GAME_CONFIG = {
     baseTapValue: 1,
+    saveVersion: 1,
+    saveKey: "lucioLootboxClicker.save.v1",
     assets: {
       mystery: "assets/lucios/LucioMistery.png",
       effects: {
@@ -15,6 +18,7 @@
       },
     },
     lucioOrder,
+    collectionOrder,
     lucios: {
       bronze: {
         label: "Bronce",
@@ -198,6 +202,9 @@
       fadeLength: 5,
       itemWidth: 78,
       naturalGap: 10,
+    },
+    audio: {
+      enabled: true,
     },
   };
 

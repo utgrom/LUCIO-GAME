@@ -79,6 +79,11 @@
         reward: "random",
         timings: config.opening,
         onStateChange: null,
+        onRewardPrepared: null,
+        onBackpackTap: null,
+        onBackpackOpened: null,
+        onMysteryReveal: null,
+        onRewardReveal: null,
         onConfirm: null,
       }, options);
       this.timings = Object.assign({}, config.opening, this.options.timings);
@@ -91,14 +96,10 @@
       this.sequenceId = 0;
 
       this.onStageInput = this.onStageInput.bind(this);
+      this.onStageKeydown = this.onStageKeydown.bind(this);
       this.onConfirm = this.onConfirm.bind(this);
       this.stage.addEventListener("pointerdown", this.onStageInput);
-      this.stage.addEventListener("keydown", (event) => {
-        if ((event.key === "Enter" || event.key === " ") && !event.target.closest("button")) {
-          event.preventDefault();
-          this.onStageInput(event);
-        }
-      });
+      this.stage.addEventListener("keydown", this.onStageKeydown);
       this.confirmButton.addEventListener("click", this.onConfirm);
       this.setBackpack(this.options.backpack, false);
       this.applyTimings(this.timings);
@@ -123,7 +124,7 @@
     transition(state) {
       this.state = state;
       this.stage.dataset.state = state;
-      this.stateOutput.innerHTML = `Estado: <b>${STATE_LABELS[state]}</b>`;
+      if (this.stateOutput) this.stateOutput.innerHTML = `Estado: <b>${STATE_LABELS[state]}</b>`;
       this.updateInterface();
       if (typeof this.options.onStateChange === "function") this.options.onStateChange(state, this);
     }
@@ -164,6 +165,10 @@
       this.sequenceId += 1;
       this.reward = parseReward(this.options.reward, this.options.backpack);
       this.applyTimings(resolveRewardTimings(this.options.timings, this.reward));
+      this.openBackpackNotified = false;
+      this.mysteryNotified = false;
+      this.rewardRevealNotified = false;
+      if (typeof this.options.onRewardPrepared === "function") this.options.onRewardPrepared(Object.assign({}, this.reward), this);
       this.taps = 0;
       this.prepareRewardRenderer();
       this.tapDots.forEach((dot) => dot.classList.remove("is-hit"));
@@ -218,6 +223,7 @@
       this.taps += 1;
       this.tapDots[this.taps - 1]?.classList.add("is-hit");
       this.shake();
+      if (typeof this.options.onBackpackTap === "function") this.options.onBackpackTap(this.taps, Object.assign({}, this.reward), this);
       if (this.taps >= 3) this.beginOpening();
       else this.updateInterface();
     }
@@ -254,6 +260,10 @@
       const backpack = config.backpacks[this.options.backpack];
       this.backpackImage.src = backpack.open;
       this.backpackImage.alt = `Mochila ${backpack.label} abierta`;
+      if (!this.openBackpackNotified) {
+        this.openBackpackNotified = true;
+        if (typeof this.options.onBackpackOpened === "function") this.options.onBackpackOpened(Object.assign({}, this.reward), this);
+      }
     }
 
     activateFlash() {
@@ -269,6 +279,10 @@
       this.stage.classList.remove("is-opening");
       this.rewardSlot.classList.remove("is-visible", "is-promoted", "is-swapped");
       this.transition(OPENING_STATES.REVEALING);
+      if (!this.mysteryNotified) {
+        this.mysteryNotified = true;
+        if (typeof this.options.onMysteryReveal === "function") this.options.onMysteryReveal(Object.assign({}, this.reward), this);
+      }
       requestAnimationFrame(() => this.rewardSlot.classList.add("is-revealing"));
       this.schedule(
         () => this.swapMysteryForReward(),
@@ -293,6 +307,17 @@
       if (this.rewardSlot.classList.contains("is-swapped")) return;
       this.rewardSlot.classList.add("is-promoted", "is-swapped");
       this.activateFlash();
+      if (!this.rewardRevealNotified) {
+        this.rewardRevealNotified = true;
+        if (typeof this.options.onRewardReveal === "function") this.options.onRewardReveal(Object.assign({}, this.reward), this);
+      }
+    }
+
+    onStageKeydown(event) {
+      if ((event.key === "Enter" || event.key === " ") && !event.target.closest("button")) {
+        event.preventDefault();
+        this.onStageInput(event);
+      }
     }
 
     onStageInput(event) {
@@ -363,6 +388,7 @@
     destroy() {
       this.reset();
       this.stage.removeEventListener("pointerdown", this.onStageInput);
+      this.stage.removeEventListener("keydown", this.onStageKeydown);
       this.confirmButton.removeEventListener("click", this.onConfirm);
     }
   }

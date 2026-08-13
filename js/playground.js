@@ -673,7 +673,20 @@
     backpack: backpackSelect.value,
     reward: rewardSelect.value,
     timings: openingValues,
+    onBackpackTap() {
+      window.AudioManager?.play("backpackShake");
+    },
+    onBackpackOpened() {
+      window.AudioManager?.play("openBackpack");
+    },
+    onMysteryReveal(reward) {
+      if (reward.shiny) window.AudioManager?.play("shiny");
+    },
+    onRewardReveal(reward) {
+      window.AudioManager?.playReveal(reward);
+    },
     onConfirm(reward) {
+      window.AudioManager?.play("tap");
       backpackView.value = "closed";
       const key = reward.shiny ? `${reward.material}Shiny` : reward.material;
       showToast(`${config.lucios[key].label} confirmado. Secuencia lista para repetir.`);

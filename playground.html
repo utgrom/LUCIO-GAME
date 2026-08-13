@@ -2,9 +2,259 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="refresh" content="0; url=index.html">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Lucio Lab</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#080a0d">
+  <meta name="description" content="Playground visual y de apertura para Lucio Lootbox Clicker.">
+  <title>Lucio Lab · FX & Opening Playground</title>
+  <link rel="stylesheet" href="css/effects.css?v=20260813-game-03">
+  <link rel="stylesheet" href="css/opening.css?v=20260813-game-03">
+  <link rel="stylesheet" href="css/playground.css?v=20260813-game-03">
 </head>
-<body><p><a href="index.html">Abrir Lucio Lab</a></p></body>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">L</span>
+      <span>Lucio Lab</span>
+    </div>
+    <span class="build-tag">PLAYGROUND / 01</span>
+  </header>
+
+  <main class="page-shell">
+    <header class="page-intro">
+      <p class="eyebrow">Visual systems playground</p>
+      <h1>Construye el drop.<br>Afina el impacto.</h1>
+      <p class="intro-copy">Un laboratorio en tiempo real para ajustar los efectos de cada Lucio y probar la secuencia completa de las mochilas antes de llevarla al juego.</p>
+    </header>
+
+    <div class="workspace">
+      <section class="playground-section" aria-labelledby="lucio-fx-title">
+        <header class="section-heading">
+          <div>
+            <span class="section-number">01 / RENDERER</span>
+            <h2 id="lucio-fx-title">Lucio FX Playground</h2>
+            <p>El mismo renderer por capas que consumirá el juego.</p>
+          </div>
+        </header>
+
+        <div class="section-grid">
+          <div class="preview-pane">
+            <div class="preview-meta">
+              <span class="status-dot">Render en vivo</span>
+              <output class="fps-readout" data-fps>-- FPS</output>
+            </div>
+            <div class="lucio-stage" data-lucio-stage aria-live="polite"></div>
+          </div>
+
+          <aside class="controls-pane" aria-label="Controles de efectos de Lucio">
+            <div class="control-group">
+              <h3>Variante</h3>
+              <label class="field" for="lucio-material">
+                <span>Material base</span>
+                <select id="lucio-material" data-lucio-material>
+                  <option value="bronze">Bronce</option>
+                  <option value="silver">Plata</option>
+                  <option value="gold">Oro</option>
+                  <option value="ruby">Rubí</option>
+                  <option value="diamond">Diamante</option>
+                  <option value="cosmic" selected>Cósmico</option>
+                </select>
+              </label>
+            </div>
+
+            <label class="shiny-master-toggle">
+              <input type="checkbox" data-shiny-modifier>
+              <span class="shiny-master-icon" aria-hidden="true">✦</span>
+              <span>
+                <strong>Modificador Shiny</strong>
+                <small>Borde, destellos, sweep y pulsación override</small>
+              </span>
+            </label>
+
+            <div class="control-group">
+              <h3>Capas del material</h3>
+              <div class="toggle-grid" data-effect-toggles>
+                <label class="toggle"><input type="checkbox" data-effect="glow">Glow</label>
+                <label class="toggle"><input type="checkbox" data-effect="sparkles">Destellos</label>
+                <label class="toggle"><input type="checkbox" data-effect="diamond">Overlay diamante</label>
+                <label class="toggle"><input type="checkbox" data-effect="cosmic">Overlay cósmico</label>
+                <label class="toggle"><input type="checkbox" data-effect="pulse">Pulsación</label>
+                <label class="toggle"><input type="checkbox" data-effect="idle">Idle</label>
+              </div>
+            </div>
+
+            <section class="preset-editor preset-editor--material">
+              <div class="preset-editor-heading">
+                <div><span>Preset por material</span><strong data-material-editor-title>Material</strong></div>
+                <button class="button button--small" type="button" data-reset-material>Reset material</button>
+              </div>
+              <div data-lucio-parameter-controls></div>
+            </section>
+
+            <section class="preset-editor preset-editor--shiny">
+              <div class="preset-editor-heading">
+                <div><span>Preset genérico</span><strong>Modificador Shiny</strong></div>
+                <button class="button button--small" type="button" data-reset-shiny>Reset Shiny</button>
+              </div>
+              <div data-shiny-parameter-controls></div>
+            </section>
+
+            <div class="control-group">
+              <h3>Preset</h3>
+              <div class="button-row">
+                <button class="button" type="button" data-copy-preset>Copiar preset compuesto</button>
+              </div>
+            </div>
+
+            <section class="preset-library">
+              <div class="preset-library-heading">
+                <div><span>Biblioteca local</span><strong data-library-scope>Versiones</strong></div>
+                <span class="library-status" data-library-status>Sin versiones</span>
+              </div>
+              <label class="field" for="preset-scope-select">
+                <span>Guardar y cargar</span>
+                <select id="preset-scope-select" data-library-scope-select>
+                  <option value="material">Material actual</option>
+                  <option value="shinyModifier">Modificador Shiny</option>
+                </select>
+              </label>
+              <label class="field" for="preset-version-select">
+                <span>Versión guardada</span>
+                <select id="preset-version-select" data-preset-version-select><option value="">Sin versiones guardadas</option></select>
+              </label>
+              <div class="button-row preset-library-actions">
+                <button class="button button--primary" type="button" data-save-version>Guardar versión</button>
+                <button class="button" type="button" data-load-version disabled>Cargar</button>
+                <button class="button" type="button" data-delete-version disabled>Eliminar</button>
+              </div>
+              <div class="button-row preset-document-actions">
+                <button class="button" type="button" data-export-library>Exportar JSON</button>
+                <button class="button" type="button" data-import-library>Importar JSON</button>
+                <button class="button button--danger" type="button" data-reset-all>Reset global</button>
+                <input class="sr-only" type="file" accept="application/json,.json" data-import-file>
+              </div>
+              <p class="library-help">Cada material y el modificador Shiny mantienen historiales independientes.</p>
+            </section>
+          </aside>
+
+          <div class="performance-panel">
+            <div class="performance-head">
+              <div>
+                <h3>Prueba de rendimiento</h3>
+                <p data-performance-copy>1 instancia · FX completos</p>
+              </div>
+              <div class="performance-actions">
+                <label class="performance-context">
+                  <span class="sr-only">Intensidad del renderer</span>
+                  <select data-performance-context>
+                    <option value="reveal">FX completos</option>
+                    <option value="collection">Colección optimizada</option>
+                  </select>
+                </label>
+                <div class="segment-control" data-performance-counts aria-label="Cantidad de Lucios">
+                  <button type="button" class="is-active" data-count="1">1</button>
+                  <button type="button" data-count="10">10</button>
+                  <button type="button" data-count="20">20</button>
+                  <button type="button" data-count="50">50</button>
+                </div>
+              </div>
+            </div>
+            <div class="performance-grid" data-performance-grid aria-live="polite"></div>
+            <details class="collection-tuning">
+              <summary>Ajustar compactación y fade</summary>
+              <div class="collection-control-host" data-collection-parameter-controls></div>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section class="playground-section" aria-labelledby="backpack-title">
+        <header class="section-heading">
+          <div>
+            <span class="section-number">02 / STATE MACHINE</span>
+            <h2 id="backpack-title">Backpack / Opening Playground</h2>
+            <p>Prueba la secuencia real, incluidos taps rápidos y skip.</p>
+          </div>
+        </header>
+
+        <div class="section-grid" data-opening-root>
+          <div class="preview-pane opening-preview">
+            <div class="opening-stage" data-opening-stage data-state="idle" tabindex="0" role="button" aria-label="Escenario interactivo de apertura">
+              <span class="opening-kicker">Live sequence</span>
+              <span class="opening-hint">Toca durante una transición para completarla.</span>
+
+              <div class="opening-scene">
+                <div class="reward-slot" data-reward-slot></div>
+                <div class="backpack-wrap" data-backpack-wrap>
+                  <img class="backpack-image" data-backpack-image draggable="false" alt="">
+                </div>
+                <div class="opening-flash" data-opening-flash aria-hidden="true"></div>
+
+                <div class="tap-instruction" data-tap-instruction hidden>
+                  <strong data-tap-label>Pulsa para abrir · 0/3</strong>
+                  <span class="tap-dots" aria-hidden="true">
+                    <i data-tap-dot></i><i data-tap-dot></i><i data-tap-dot></i>
+                  </span>
+                </div>
+
+                <div class="reward-copy" data-reward-copy aria-live="polite">
+                  <p class="reward-rarity" data-reward-rarity></p>
+                  <h3 data-reward-name></h3>
+                  <p>Bonus permanente <b data-reward-bonus></b> 🧈 por tap</p>
+                </div>
+              </div>
+
+              <div class="confirm-wrap" data-confirm-wrap>
+                <button class="button button--primary button--wide" type="button" data-confirm>Confirmar</button>
+              </div>
+            </div>
+          </div>
+
+          <aside class="controls-pane" aria-label="Controles de apertura">
+            <div class="control-group">
+              <h3>Escenario</h3>
+              <label class="field" for="backpack-tier">
+                <span>Mochila</span>
+                <select id="backpack-tier" data-backpack-select>
+                  <option value="normal">Normal · 50 🧈</option>
+                  <option value="large">Grande · 1.000 🧈</option>
+                  <option value="mega" selected>Mega · 10.000 🧈</option>
+                </select>
+              </label>
+              <label class="field" for="backpack-view">
+                <span>Vista aislada</span>
+                <select id="backpack-view" data-backpack-view>
+                  <option value="closed">Mochila cerrada</option>
+                  <option value="open">Mochila abierta</option>
+                </select>
+              </label>
+              <label class="field" for="reward-select">
+                <span>Reward forzado</span>
+                <select id="reward-select" data-reward-select></select>
+              </label>
+              <div class="button-row" style="margin-top: 14px">
+                <button class="button button--primary" type="button" data-start-opening>Ejecutar secuencia</button>
+                <button class="button" type="button" data-reset-opening>Reiniciar</button>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <h3>Máquina de estados</h3>
+              <div class="state-readout" data-state-output>Estado: <b>IDLE</b></div>
+            </div>
+
+            <div data-opening-parameter-controls></div>
+          </aside>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div class="toast" data-toast role="status" aria-live="polite"></div>
+
+  <script src="js/config.js?v=20260813-game-03"></script>
+  <script src="js/lucio-renderer.js?v=20260813-game-03"></script>
+  <script src="js/backpack-renderer.js?v=20260813-game-03"></script>
+  <script src="js/audio.js?v=20260813-game-03"></script>
+  <script src="js/playground.js?v=20260813-game-03"></script>
+</body>
 </html>
