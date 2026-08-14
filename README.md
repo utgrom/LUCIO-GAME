@@ -2,6 +2,8 @@
 
 Juego clicker web, mobile-first y sin build tools. El jugador genera Mantecas, compra mochilas, descubre Lucios normales y Shiny, y aumenta permanentemente su producción por tap.
 
+El estado actual y la hoja de ruta de Amvorguezo, expediciones, combate, Gabos y Gabrario están organizados en [`GDD.md`](GDD.md).
+
 ## Ejecutar localmente
 
 Sirve la carpeta raíz con cualquier servidor estático. Por ejemplo:
