@@ -64,6 +64,7 @@
       this.renderers = [];
       this.destroyed = false;
       this.layoutFrame = 0;
+      this.touchPointerId = null;
 
       collectionSequence += 1;
       this.id = collectionSequence;
@@ -73,6 +74,28 @@
       this.container.replaceChildren(this.element);
 
       this.handleResize = () => this.scheduleLayout();
+      this.handleTouchStart = (event) => {
+        if (event.pointerType !== "touch" && event.pointerType !== "pen") return;
+        const copy = event.target.closest?.(".collection-lucio");
+        if (!copy) return;
+        this.touchPointerId = event.pointerId;
+        this.clearTouchHover();
+        copy.classList.add("is-lifted");
+      };
+      this.handleTouchMove = (event) => {
+        if (event.pointerId !== this.touchPointerId) return;
+        this.updateTouchHover(event.clientX, event.clientY);
+      };
+      this.handleTouchEnd = (event) => {
+        if (event.pointerId !== this.touchPointerId) return;
+        this.touchPointerId = null;
+        this.clearTouchHover();
+      };
+      this.element.addEventListener("pointerdown", this.handleTouchStart);
+      this.element.addEventListener("pointermove", this.handleTouchMove);
+      this.element.addEventListener("pointerup", this.handleTouchEnd);
+      this.element.addEventListener("pointercancel", this.handleTouchEnd);
+
       if (typeof window.ResizeObserver === "function") {
         this.resizeObserver = new window.ResizeObserver(this.handleResize);
         this.resizeObserver.observe(this.container);
@@ -81,6 +104,27 @@
       }
 
       this.update(normalized.counts || {});
+    }
+
+    clearTouchHover() {
+      this.element.querySelectorAll(".collection-lucio.is-lifted").forEach((copy) => {
+        copy.classList.remove("is-lifted");
+      });
+    }
+
+    updateTouchHover(clientX, clientY) {
+      let hoveredCopy = null;
+
+      this.element.querySelectorAll(".collection-lucio").forEach((copy) => {
+        const rect = copy.getBoundingClientRect();
+        if (
+          clientX >= rect.left && clientX <= rect.right &&
+          clientY >= rect.top && clientY <= rect.bottom
+        ) hoveredCopy = copy;
+      });
+
+      this.clearTouchHover();
+      if (hoveredCopy) hoveredCopy.classList.add("is-lifted");
     }
 
     collectionPreset(material) {
@@ -307,6 +351,10 @@
       }
       if (this.resizeObserver) this.resizeObserver.disconnect();
       else window.removeEventListener("resize", this.handleResize);
+      this.element.removeEventListener("pointerdown", this.handleTouchStart);
+      this.element.removeEventListener("pointermove", this.handleTouchMove);
+      this.element.removeEventListener("pointerup", this.handleTouchEnd);
+      this.element.removeEventListener("pointercancel", this.handleTouchEnd);
       this.renderers.forEach((renderer) => renderer.destroy());
       this.renderers = [];
       this.categories = [];
