@@ -374,6 +374,188 @@ button { color: inherit; }
 .offline-bank__track i { display: block; width: 0%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #88bd42, var(--green)); }
 .offline-bank small { color: #7e8992; font-size: .61rem; text-align: center; }
 
+.ambu-view {
+  position: relative;
+  display: grid;
+  width: min(100%, 760px);
+  min-height: calc(100dvh - 64px - var(--nav-height));
+  margin: 0 auto;
+  grid-template-rows: auto auto 1fr;
+  align-items: start;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(255, 159, 73, .11), transparent 34%),
+    radial-gradient(circle at 50% 95%, rgba(138, 199, 91, .07), transparent 30%);
+}
+
+.ambu-view::before {
+  position: absolute;
+  inset: 18% -20% -25%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, .035), transparent 63%);
+  content: "";
+  pointer-events: none;
+}
+
+.ambu-back {
+  position: absolute;
+  z-index: 5;
+  top: 14px;
+  left: max(12px, env(safe-area-inset-left));
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: #d5dadd;
+  background: rgba(16, 20, 25, .8);
+  cursor: pointer;
+}
+
+.ambu-back span { font-size: 1.45rem; line-height: .7; }
+
+.ambu-wallet {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 2px 72px 0;
+  text-align: center;
+}
+
+.ambu-wallet > span { color: var(--muted); font-size: .61rem; font-weight: 850; letter-spacing: .14em; text-transform: uppercase; }
+.ambu-wallet strong { font-size: clamp(1.6rem, 8vw, 2.65rem); font-variant-numeric: tabular-nums; letter-spacing: -.045em; }
+.ambu-wallet i { font-size: .65em; font-style: normal; }
+
+.ambu-stage {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  min-height: 0;
+  align-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 20px 0 10px;
+  text-align: center;
+}
+
+.ambu-stage__header { position: relative; z-index: 3; }
+.ambu-stage__header p,
+.ambu-action-card > span,
+.ambu-baby-card > span { margin: 0 0 5px; color: var(--orange-2); font-size: .6rem; font-weight: 950; letter-spacing: .18em; }
+.ambu-stage__header h1 { margin: 0; font-size: clamp(1.65rem, 9vw, 3.1rem); letter-spacing: -.045em; line-height: 1; }
+.ambu-stage__header > span { display: block; max-width: 420px; margin: 8px auto 0; color: var(--muted); font-size: .74rem; line-height: 1.45; }
+
+.ambu-character {
+  position: relative;
+  display: grid;
+  width: min(64vw, 34vh, 360px);
+  aspect-ratio: 1;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.ambu-character::after {
+  position: absolute;
+  z-index: -1;
+  inset: 16%;
+  border: 1px solid rgba(255, 185, 111, .13);
+  border-radius: 50%;
+  box-shadow: 0 0 50px rgba(255, 126, 29, .07), inset 0 0 35px rgba(255, 255, 255, .025);
+  content: "";
+}
+
+.ambu-character__aura {
+  position: absolute;
+  z-index: -1;
+  inset: 15%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 188, 117, .12), transparent 68%);
+  opacity: .65;
+  animation: ambu-aura 3.4s ease-in-out infinite;
+}
+
+.ambu-character img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 26px 24px rgba(0, 0, 0, .46));
+  pointer-events: none;
+  transform-origin: 50% 72%;
+  will-change: transform, opacity;
+}
+
+.ambu-character.is-tapped img { animation: ambu-egg-tap 420ms cubic-bezier(.36,.07,.19,.97); }
+.ambu-character.is-birthing img { animation: ambu-egg-birth 1.35s cubic-bezier(.4,0,.2,1) both; }
+.ambu-character.is-arriving img { animation: ambu-baby-arrive 720ms cubic-bezier(.2,.9,.25,1.2) both; }
+.ambu-stage[data-stage="baby"] .ambu-character { width: min(76vw, 43vh, 430px); cursor: default; }
+.ambu-stage[data-stage="baby"] .ambu-character__aura { background: radial-gradient(circle, rgba(181, 255, 119, .16), transparent 68%); }
+
+.ambu-hatch-progress {
+  display: grid;
+  width: min(82vw, 390px);
+  gap: 7px;
+}
+
+.ambu-hatch-progress > div:first-child { display: flex; align-items: baseline; justify-content: space-between; color: var(--muted); font-size: .64rem; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+.ambu-hatch-progress strong { color: #fff; font-size: .75rem; font-variant-numeric: tabular-nums; }
+.ambu-hatch-progress__track { height: 8px; border-radius: 999px; background: rgba(255, 255, 255, .075); overflow: hidden; }
+.ambu-hatch-progress__track i { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #ff8124, #ffd083); box-shadow: 0 0 14px rgba(255, 154, 65, .34); transition: width 240ms ease; }
+
+.ambu-action-card,
+.ambu-baby-card {
+  display: grid;
+  width: min(100%, 430px);
+  gap: 5px;
+  padding: 15px;
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  background: rgba(15, 19, 24, .88);
+  box-shadow: 0 16px 42px rgba(0, 0, 0, .24);
+}
+
+.ambu-action-card h2 { margin: 0; font-size: 1.12rem; }
+.ambu-action-card p,
+.ambu-baby-card p { margin: 2px 0 9px; color: var(--muted); font-size: .7rem; line-height: 1.45; }
+.ambu-action-card small { min-height: 1em; color: #be8d61; font-size: .61rem; }
+.ambu-baby-card { border-color: rgba(200, 255, 107, .15); background: rgba(20, 29, 18, .76); }
+.ambu-baby-card > span { color: var(--green); }
+.ambu-baby-card > strong { font-size: .95rem; }
+.ambu-baby-card p { margin-bottom: 0; }
+
+@keyframes ambu-egg-tap {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  24% { transform: rotate(-6deg) scale(.98); }
+  50% { transform: rotate(6deg) scale(1.025); }
+  74% { transform: rotate(-3deg) scale(.995); }
+}
+
+@keyframes ambu-egg-birth {
+  0% { transform: scale(1); filter: brightness(1) drop-shadow(0 26px 24px rgba(0, 0, 0, .46)); }
+  18% { transform: scaleX(1.08) scaleY(.88); }
+  38% { transform: scaleX(.89) scaleY(1.18); }
+  58% { transform: scaleX(1.11) scaleY(.84); }
+  76% { transform: scaleX(.92) scaleY(1.2); filter: brightness(1.25) drop-shadow(0 0 32px rgba(255, 211, 151, .62)); }
+  100% { transform: scale(.35); filter: brightness(2) drop-shadow(0 0 45px rgba(255, 235, 199, .9)); opacity: 0; }
+}
+
+@keyframes ambu-baby-arrive {
+  0% { transform: scale(.35) translateY(16px); filter: brightness(2); opacity: 0; }
+  58% { transform: scale(1.08) translateY(-5px); opacity: 1; }
+  100% { transform: scale(1) translateY(0); filter: brightness(1); opacity: 1; }
+}
+
+@keyframes ambu-aura { 50% { opacity: 1; transform: scale(1.08); } }
+
 .view-heading { margin: 4px 0 24px; }
 .view-heading p { margin: 0 0 7px; color: var(--orange); font-size: .66rem; font-weight: 900; letter-spacing: .2em; }
 .view-heading h1 { margin: 0; font-size: clamp(2rem, 10vw, 3.6rem); letter-spacing: -.055em; line-height: 1.02; }
@@ -689,6 +871,7 @@ button { color: inherit; }
 .game-toast.is-visible { opacity: 1; transform: none; }
 .game-toast[data-tone="warning"] { border-color: rgba(255, 178, 95, .34); color: #ffe1ba; background: rgba(49, 30, 13, .96); }
 .game-toast[data-tone="error"] { border-color: rgba(255, 104, 104, .34); color: #ffd0d0; background: rgba(48, 17, 19, .96); }
+.game-toast[data-tone="discovery"] { border-color: rgba(255, 190, 121, .38); color: #fff0d8; background: rgba(48, 29, 15, .97); }
 
 @keyframes tap-ring-spin { to { transform: rotate(360deg); } }
 @keyframes tap-pop {
@@ -703,6 +886,7 @@ button { color: inherit; }
   .game-header { padding-right: 28px; padding-left: 28px; }
   .view { padding: 34px 28px 48px; }
   .tap-view { grid-template-rows: auto minmax(300px, 1fr) auto; }
+  .ambu-view { padding-top: 30px; }
   .shop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .backpack-card:last-child { grid-column: 1 / -1; }
   .lucio-collection { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -746,6 +930,17 @@ button { color: inherit; }
   .wallet-card__amount { font-size: clamp(2.1rem, 11vw, 3.5rem); }
   .tap-footer-slot { min-height: 58px; }
 
+  .ambu-view { padding-top: 12px; padding-bottom: 22px; }
+  .ambu-wallet strong { font-size: 1.9rem; }
+  .ambu-stage { gap: 7px; padding-top: 10px; }
+  .ambu-stage__header h1 { font-size: clamp(1.55rem, 8vw, 2rem); }
+  .ambu-stage__header > span { margin-top: 5px; font-size: .67rem; }
+  .ambu-character { width: min(54vw, 29vh, 210px); }
+  .ambu-stage[data-stage="baby"] .ambu-character { width: min(63vw, 35vh, 250px); }
+  .ambu-action-card,
+  .ambu-baby-card { padding: 12px 14px; }
+  .ambu-action-card p { margin-bottom: 6px; }
+
   .opening-overlay { padding: 4px; }
   .opening-card { border-radius: 18px; }
   .opening-card .opening-stage { min-height: calc(100dvh - 8px); }
@@ -761,7 +956,18 @@ button { color: inherit; }
   .opening-card .opening-hint { top: 11px; right: 10px; max-width: 125px; }
 }
 
+@media (max-height: 600px) and (max-width: 719px) {
+  .ambu-character { width: min(48vw, 22vh, 160px); }
+  .ambu-stage[data-stage="baby"] .ambu-character { width: min(56vw, 28vh, 205px); }
+  .ambu-action-card { gap: 3px; }
+  .ambu-action-card p { display: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tap-zone__rings { animation: none; }
   .tap-pop { animation-duration: 1ms; }
+  .ambu-character__aura { animation: none; }
+  .ambu-character.is-tapped img,
+  .ambu-character.is-birthing img,
+  .ambu-character.is-arriving img { animation-duration: 1ms; }
 }

@@ -6,8 +6,21 @@
 
   const GAME_CONFIG = {
     baseTapValue: 1,
-    saveVersion: 1,
+    saveVersion: 2,
     saveKey: "lucioLootboxClicker.save.v1",
+    ambu: {
+      discoveryThreshold: 50000,
+      hatchPrice: 250000,
+      hatchTaps: 15,
+      hatchDelayMs: 1450,
+      sprites: {
+        egg: "assets/invocados/Ambu_1.png",
+        crack1: "assets/invocados/Ambu_1_1.png",
+        crack2: "assets/invocados/Ambu_1_2.png",
+        crack3: "assets/invocados/Ambu_1_3.png",
+        baby: "assets/invocados/Ambu_2.png",
+      },
+    },
     assets: {
       mystery: "assets/lucios/LucioMistery.png",
       effects: {

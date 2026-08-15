@@ -330,6 +330,24 @@ Equipar auras y modificar producción/combate
 
 Los pasos de huevo, alimentación y eclosión son gastos impulsados inicialmente por la curiosidad. La producción comienza recién al nacer.
 
+### 8.1 Primer hito implementable: del hallazgo a Ambu Bebé
+
+**Decidido.** El primer contacto con Ambu sigue esta secuencia:
+
+1. Al alcanzar por primera vez `50.000` Mantecas disponibles, se descubre el huevo. El hallazgo es permanente aunque luego baje el saldo.
+2. Se muestra una sola vez el mensaje: “Entre las barras de Manteca, distingues un huevo misterioso...”.
+3. Se habilita desde Tap una flecha con el icono del huevo que abre la vista de Ambu.
+4. Tocar el huevo antes de pagar sólo lo agita; no da recursos ni progreso.
+5. Eclosionarlo cuesta `250.000` Mantecas.
+6. Después del pago se requieren `15` golpes persistentes al cascarón:
+   - golpes `0–4`: `Ambu_1.png`;
+   - golpes `5–9`: `Ambu_1_1.png`;
+   - golpes `10–14`: `Ambu_1_2.png`;
+   - golpe `15`: `Ambu_1_3.png`.
+7. Tras el golpe 15, el huevo se estira y comprime antes de transformarse en `Ambu_2.png`, desbloqueando a **Ambu Bebé**.
+
+El pago, cada golpe y el nacimiento se guardan inmediatamente. Una recarga no puede duplicar el coste, perder golpes ni impedir que finalice un nacimiento que ya alcanzó el golpe 15.
+
 ## 9. Etapas de Amvorguezo
 
 | Etapa | Producción y sistemas |
@@ -912,6 +930,8 @@ Al cargar el save, el juego debe resolver de manera determinista el tiempo trans
 ## 29. Migración del save
 
 Antes de v2 debe crearse una versión nueva del save con migración desde v1.
+
+**Implementado en el primer hito de v2:** el esquema sube a `saveVersion: 2` y añade un bloque persistente `ambu` con etapa (`locked`, `egg`, `hatching` o `baby`), golpes de eclosión, estado de la notificación y marcas temporales de descubrimiento/nacimiento. La migración conserva Mantecas, colección y estadísticas de v1.
 
 Campos conceptuales futuros:
 

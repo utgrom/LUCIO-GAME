@@ -31,6 +31,22 @@
     audioIcon: document.querySelector("[data-audio-icon]"),
     saveVersion: document.querySelector("[data-save-version]"),
     toast: document.querySelector("[data-game-toast]"),
+    openAmbu: document.querySelector("[data-open-ambu]"),
+    tapAmbuBackdrop: document.querySelector("[data-tap-ambu-backdrop]"),
+    ambuMantecas: document.querySelector("[data-ambu-mantecas]"),
+    ambuStage: document.querySelector("[data-ambu-stage]"),
+    ambuKicker: document.querySelector("[data-ambu-kicker]"),
+    ambuName: document.querySelector("[data-ambu-name]"),
+    ambuInstruction: document.querySelector("[data-ambu-instruction]"),
+    ambuCharacter: document.querySelector("[data-ambu-character]"),
+    ambuSprite: document.querySelector("[data-ambu-sprite]"),
+    ambuProgress: document.querySelector("[data-ambu-progress]"),
+    ambuHits: document.querySelector("[data-ambu-hits]"),
+    ambuProgressFill: document.querySelector("[data-ambu-progress-fill]"),
+    ambuPurchase: document.querySelector("[data-ambu-purchase]"),
+    buyAmbu: document.querySelector("[data-buy-ambu]"),
+    ambuPriceHelp: document.querySelector("[data-ambu-price-help]"),
+    ambuBabyCard: document.querySelector("[data-ambu-baby-card]"),
   };
 
   const numberFormatter = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 });
@@ -40,6 +56,8 @@
   let collectionHasUpdate = false;
   let purchasedReward = null;
   let openingReturnFocus = null;
+  let ambuBirthTimer = 0;
+  let ambuArrivalTimer = 0;
 
   function formatNumber(value) {
     return numberFormatter.format(Math.max(0, Number(value) || 0));
@@ -53,15 +71,16 @@
     return `${reward.material}${reward.shiny ? "Shiny" : ""}`;
   }
 
-  function showToast(message, tone = "success") {
+  function showToast(message, tone = "success", duration = 2600) {
     window.clearTimeout(toastTimer);
     elements.toast.textContent = message;
     elements.toast.dataset.tone = tone;
     elements.toast.classList.add("is-visible");
-    toastTimer = window.setTimeout(() => elements.toast.classList.remove("is-visible"), 2600);
+    toastTimer = window.setTimeout(() => elements.toast.classList.remove("is-visible"), duration);
   }
 
   function navigate(viewName, options = {}) {
+    if (viewName === "ambu" && state.getAmbu().stage === "locked") viewName = "tap";
     if (!elements.views.some((view) => view.dataset.view === viewName)) return;
     activeView = viewName;
     elements.views.forEach((view) => {
@@ -69,8 +88,9 @@
       view.hidden = !selected;
       view.classList.toggle("view--active", selected);
     });
+    const navView = viewName === "ambu" ? "tap" : viewName;
     elements.navItems.forEach((item) => {
-      const selected = item.dataset.nav === viewName;
+      const selected = item.dataset.nav === navView;
       item.classList.toggle("is-active", selected);
       if (selected) item.setAttribute("aria-current", "page");
       else item.removeAttribute("aria-current");
@@ -94,6 +114,7 @@
 
   function viewFromLocation() {
     const requested = window.location.hash.slice(1);
+    if (requested === "ambu" && state.getAmbu().stage === "locked") return "tap";
     return elements.views.some((view) => view.dataset.view === requested) ? requested : "tap";
   }
 
@@ -175,10 +196,139 @@
     const tapValue = state.getTapValue();
     elements.mantecas.textContent = formatNumber(snapshot.mantecas);
     elements.headerMantecas.textContent = formatNumber(snapshot.mantecas);
+    elements.ambuMantecas.textContent = formatNumber(snapshot.mantecas);
     elements.tapValue.textContent = formatNumber(tapValue);
     elements.totalLucios.textContent = formatNumber(totalCopies(snapshot.counts));
     elements.totalBackpacks.textContent = formatNumber(snapshot.stats.backpacksOpened);
     updateShopAffordability();
+  }
+
+  function ambuSpriteFor(ambu) {
+    const sprites = config.ambu.sprites;
+    if (ambu.stage === "baby") return sprites.baby;
+    if (ambu.hatchTaps >= 15) return sprites.crack3;
+    if (ambu.hatchTaps >= 10) return sprites.crack2;
+    if (ambu.hatchTaps >= 5) return sprites.crack1;
+    return sprites.egg;
+  }
+
+  function scheduleAmbuBirth() {
+    if (ambuBirthTimer || state.getAmbu().stage !== "hatching") return;
+    elements.ambuCharacter.classList.remove("is-tapped");
+    elements.ambuCharacter.classList.add("is-birthing");
+    elements.ambuCharacter.disabled = true;
+    elements.ambuInstruction.textContent = "El huevo está a punto de abrirse...";
+
+    ambuBirthTimer = window.setTimeout(() => {
+      ambuBirthTimer = 0;
+      const result = state.completeAmbuHatching();
+      elements.ambuCharacter.classList.remove("is-birthing");
+      if (!result.ok) return;
+      elements.ambuCharacter.classList.add("is-arriving");
+      window.clearTimeout(ambuArrivalTimer);
+      ambuArrivalTimer = window.setTimeout(() => elements.ambuCharacter.classList.remove("is-arriving"), 760);
+      showToast("¡Ambu bebé ha nacido!", "discovery", 4800);
+    }, config.ambu.hatchDelayMs);
+  }
+
+  function renderAmbu() {
+    const ambu = state.getAmbu();
+    const unlocked = ambu.stage !== "locked";
+    const isEgg = ambu.stage === "egg";
+    const isHatching = ambu.stage === "hatching";
+    const isBaby = ambu.stage === "baby";
+    const maxHits = config.ambu.hatchTaps;
+    const canBuy = state.canPurchaseAmbuEgg();
+
+    elements.openAmbu.hidden = !unlocked;
+    elements.tapAmbuBackdrop.hidden = !isBaby;
+    elements.openAmbu.querySelector("img").src = isBaby ? config.ambu.sprites.baby : config.ambu.sprites.egg;
+    elements.openAmbu.setAttribute("aria-label", isBaby ? "Visitar a Ambu bebé" : "Visitar el huevo misterioso");
+
+    if (!unlocked) {
+      if (activeView === "ambu") navigate("tap", { focus: false });
+      window.clearTimeout(ambuBirthTimer);
+      ambuBirthTimer = 0;
+      elements.ambuCharacter.classList.remove("is-tapped", "is-birthing", "is-arriving");
+      return;
+    }
+
+    elements.ambuStage.dataset.stage = ambu.stage;
+    elements.ambuSprite.src = ambuSpriteFor(ambu);
+    elements.ambuSprite.alt = isBaby ? "Ambu bebé" : "Huevo misterioso";
+    elements.ambuPurchase.hidden = !isEgg;
+    elements.ambuProgress.hidden = !isHatching;
+    elements.ambuBabyCard.hidden = !isBaby;
+    elements.ambuHits.textContent = String(ambu.hatchTaps);
+    elements.ambuProgressFill.style.width = `${Math.min(100, ambu.hatchTaps / maxHits * 100)}%`;
+    elements.ambuCharacter.disabled = isBaby || (isHatching && ambu.hatchTaps >= maxHits);
+
+    if (isEgg) {
+      elements.ambuKicker.textContent = "HALLAZGO MISTERIOSO";
+      elements.ambuName.textContent = "HUEVO MISTERIOSO";
+      elements.ambuInstruction.textContent = "El cascarón permanece inmóvil... salvo cuando lo tocas.";
+      elements.ambuCharacter.setAttribute("aria-label", "Tocar el huevo misterioso");
+      elements.buyAmbu.disabled = !canBuy;
+      elements.buyAmbu.textContent = `Eclosionar · ${formatNumber(config.ambu.hatchPrice)} 🧈`;
+      elements.ambuPriceHelp.textContent = canBuy
+        ? "Tienes suficientes Mantecas para despertarlo."
+        : `Faltan ${formatNumber(config.ambu.hatchPrice - state.getMantecas())} Mantecas.`;
+    } else if (isHatching) {
+      elements.ambuKicker.textContent = "ECLOSIÓN";
+      elements.ambuName.textContent = "¡ROMPE EL CASCARÓN!";
+      elements.ambuInstruction.textContent = ambu.hatchTaps >= maxHits
+        ? "El huevo está a punto de abrirse..."
+        : `Toca el huevo · faltan ${maxHits - ambu.hatchTaps} golpes`;
+      elements.ambuCharacter.setAttribute("aria-label", `Golpear el cascarón; ${ambu.hatchTaps} de ${maxHits}`);
+    } else {
+      elements.ambuKicker.textContent = "COMPAÑERO INVOCADO";
+      elements.ambuName.textContent = "AMBU BEBÉ";
+      elements.ambuInstruction.textContent = "Una criatura extraña y poderosa ha despertado.";
+      elements.ambuCharacter.setAttribute("aria-label", "Ambu bebé");
+    }
+
+    if (isHatching && ambu.hatchTaps >= maxHits) scheduleAmbuBirth();
+    else {
+      window.clearTimeout(ambuBirthTimer);
+      ambuBirthTimer = 0;
+      elements.ambuCharacter.classList.remove("is-birthing");
+    }
+  }
+
+  function announceAmbuDiscovery() {
+    const ambu = state.getAmbu();
+    if (ambu.stage === "locked" || ambu.notificationSeen) return;
+    showToast("Entre las barras de Manteca, distingues un huevo misterioso...", "discovery", 6200);
+    state.markAmbuNotificationSeen();
+  }
+
+  function animateAmbuTap() {
+    elements.ambuCharacter.classList.remove("is-tapped");
+    void elements.ambuCharacter.offsetWidth;
+    elements.ambuCharacter.classList.add("is-tapped");
+    window.setTimeout(() => elements.ambuCharacter.classList.remove("is-tapped"), 450);
+  }
+
+  function touchAmbu() {
+    const ambu = state.getAmbu();
+    if (ambu.stage === "baby" || ambu.hatchTaps >= config.ambu.hatchTaps) return;
+    animateAmbuTap();
+    const result = state.tapAmbuEgg();
+    if (!result.ok && result.reason === "payment-required") {
+      showToast("El huevo se agita, pero todavía no tiene fuerza para abrirse.", "warning");
+    }
+  }
+
+  function buyAmbuEgg() {
+    const result = state.purchaseAmbuEgg();
+    if (!result.ok) {
+      if (result.reason === "insufficient-mantecas") {
+        showToast(`Te faltan ${formatNumber(result.missing)} 🧈 para eclosionar el huevo.`, "warning");
+      }
+      return;
+    }
+    showToast("El huevo responde. ¡Rompe el cascarón!", "discovery", 3800);
+    elements.ambuCharacter.focus({ preventScroll: true });
   }
 
   function renderCollection() {
@@ -291,6 +441,7 @@
       ...Object.values(config.assets.effects),
       ...config.lucioOrder.map((material) => config.lucios[material].sprite),
       ...backpackOrder.flatMap((id) => [config.backpacks[id].closed, config.backpacks[id].open]),
+      ...Object.values(config.ambu.sprites),
     ];
     paths.forEach((src) => {
       const image = new Image();
@@ -324,7 +475,9 @@
 
   state.subscribe((event) => {
     renderEconomy();
+    renderAmbu();
     if (["purchase", "reset", "import"].includes(event.type)) renderCollection();
+    if (event.type === "ambu-discovered") announceAmbuDiscovery();
   });
 
   elements.tapZone.addEventListener("click", (event) => performTap(event));
@@ -335,6 +488,9 @@
 
   document.querySelectorAll("[data-go-shop]").forEach((button) => button.addEventListener("click", () => navigate("shop")));
   document.querySelectorAll("[data-go-tap]").forEach((button) => button.addEventListener("click", () => navigate("tap")));
+  elements.openAmbu.addEventListener("click", () => navigate("ambu"));
+  elements.ambuCharacter.addEventListener("click", touchAmbu);
+  elements.buyAmbu.addEventListener("click", buyAmbuEgg);
 
   elements.shopGrid.addEventListener("click", (event) => {
     const button = event.target.closest("[data-buy-backpack]");
@@ -354,7 +510,7 @@
   });
 
   document.querySelector("[data-reset-progress]").addEventListener("click", () => {
-    const accepted = window.confirm("¿Borrar todas tus Mantecas, Lucios y estadísticas? Esta acción no se puede deshacer.");
+    const accepted = window.confirm("¿Borrar todas tus Mantecas, Lucios, progreso de Ambu y estadísticas? Esta acción no se puede deshacer.");
     if (!accepted) return;
     state.reset();
     collectionHasUpdate = false;
@@ -381,6 +537,8 @@
   elements.saveVersion.textContent = String(config.saveVersion);
   renderEconomy();
   renderCollection();
+  renderAmbu();
+  announceAmbuDiscovery();
   updateAudioUi();
   audio.preload?.();
   preloadImages();
