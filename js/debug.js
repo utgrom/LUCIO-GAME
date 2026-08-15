@@ -68,6 +68,18 @@
             <button type="button" data-debug-currency-preset="50">+50</button>
             <button type="button" data-debug-currency-preset="1000">+1.000</button>
             <button type="button" data-debug-currency-preset="10000">+10.000</button>
+            <button type="button" data-debug-currency-preset="50000">+50.000</button>
+            <button type="button" data-debug-currency-preset="250000">+250.000</button>
+          </div>
+        </section>
+
+        <section class="lucio-debug__section" aria-labelledby="debug-ambu-title">
+          <h2 id="debug-ambu-title">Ambu</h2>
+          <div class="lucio-debug__presets" aria-label="Etapas de prueba de Ambu">
+            <button type="button" data-debug-ambu-stage="locked">Bloqueado</button>
+            <button type="button" data-debug-ambu-stage="egg">Huevo</button>
+            <button type="button" data-debug-ambu-stage="hatching">Eclosión</button>
+            <button type="button" data-debug-ambu-stage="baby">Bebé</button>
           </div>
         </section>
 
@@ -171,6 +183,25 @@
         snapshot.counts[id] = safeAdd(snapshot.counts[id], count);
       });
       report(`${labelForVariant(id)}: +${count.toLocaleString("es-AR")} copias.`);
+      return result;
+    }
+
+    function setAmbuStage(stage) {
+      const validStages = ["locked", "egg", "hatching", "baby"];
+      if (!validStages.includes(stage)) throw new Error("Etapa de Ambu desconocida.");
+      const result = importMutation((snapshot) => {
+        if (stage === "locked") {
+          snapshot.mantecas = Math.min(snapshot.mantecas, config.ambu.discoveryThreshold - 1);
+        }
+        snapshot.ambu = {
+          stage,
+          hatchTaps: stage === "baby" ? config.ambu.hatchTaps : 0,
+          notificationSeen: stage !== "locked",
+          discoveredAt: stage === "locked" ? 0 : Date.now(),
+          hatchedAt: stage === "baby" ? Date.now() : 0,
+        };
+      });
+      report(`Ambu quedó en etapa: ${stage}.`);
       return result;
     }
 
@@ -278,6 +309,9 @@
     panel.querySelectorAll("[data-debug-currency-preset]").forEach((button) => {
       button.addEventListener("click", () => safely(() => addMantecas(button.dataset.debugCurrencyPreset)));
     });
+    panel.querySelectorAll("[data-debug-ambu-stage]").forEach((button) => {
+      button.addEventListener("click", () => safely(() => setAmbuStage(button.dataset.debugAmbuStage)));
+    });
     panel.querySelector("[data-debug-grant]").addEventListener("click", () => safely(() => grantVariant(elements.variant.value, elements.grantCount.value)));
     panel.querySelectorAll("[data-debug-duplicates]").forEach((button) => {
       button.addEventListener("click", () => safely(() => populateDuplicates(elements.duplicateCount.value, button.dataset.debugDuplicates === "all")));
@@ -300,6 +334,7 @@
       panel,
       addMantecas,
       resetMantecas,
+      setAmbuStage,
       grantVariant,
       populateDuplicates,
       openFree,

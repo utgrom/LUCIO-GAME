@@ -12,6 +12,10 @@
   const MATERIAL_IDS = Object.freeze((config.lucioOrder || []).slice());
   const AUTOSAVE_DELAY = 400;
   const MAX_VALUE = Number.MAX_SAFE_INTEGER;
+  const AMBU_CONFIG = config.ambu || {};
+  const AMBU_DISCOVERY_THRESHOLD = readConfigInteger(AMBU_CONFIG.discoveryThreshold, 50000);
+  const AMBU_HATCH_PRICE = readConfigInteger(AMBU_CONFIG.hatchPrice, 250000);
+  const AMBU_HATCH_TAPS = readConfigInteger(AMBU_CONFIG.hatchTaps, 15);
 
   function safeAdd(left, right) {
     return Math.min(MAX_VALUE, left + right);
@@ -19,6 +23,10 @@
 
   function readNonNegativeNumber(value, fallback) {
     return Number.isFinite(value) && value >= 0 ? value : fallback;
+  }
+
+  function readConfigInteger(value, fallback) {
+    return Number.isSafeInteger(value) && value >= 0 ? value : fallback;
   }
 
   function normalizeReward(reward) {
@@ -125,12 +133,23 @@
       return flush();
     }
 
+    function discoverAmbu(options) {
+      const settings = Object.assign({ emitEvent: true }, options);
+      if (state.ambu.stage !== "locked" || state.mantecas < AMBU_DISCOVERY_THRESHOLD) return false;
+
+      state.ambu.stage = "egg";
+      state.ambu.discoveredAt = Date.now();
+      const persisted = saveImmediately();
+      if (settings.emitEvent) emit("ambu-discovered", { persisted });
+      return true;
+    }
+
     function tap() {
       const gained = getTapValue();
       state.mantecas = safeAdd(state.mantecas, gained);
       state.stats.totalTaps = safeAdd(state.stats.totalTaps, 1);
       state.stats.totalMantecasEarned = safeAdd(state.stats.totalMantecasEarned, gained);
-      scheduleSave();
+      if (!discoverAmbu()) scheduleSave();
       emit("tap", { gained });
 
       return Object.freeze({
@@ -138,6 +157,83 @@
         mantecas: state.mantecas,
         tapValue: getTapValue(),
       });
+    }
+
+    function getAmbu() {
+      return Object.assign({}, state.ambu);
+    }
+
+    function markAmbuNotificationSeen() {
+      if (state.ambu.stage === "locked" || state.ambu.notificationSeen) return false;
+      state.ambu.notificationSeen = true;
+      const persisted = saveImmediately();
+      emit("ambu-notification-seen", { persisted });
+      return persisted;
+    }
+
+    function canPurchaseAmbuEgg() {
+      return state.ambu.stage === "egg" && state.mantecas >= AMBU_HATCH_PRICE;
+    }
+
+    function purchaseAmbuEgg() {
+      if (state.ambu.stage !== "egg") {
+        return Object.freeze({ ok: false, reason: "invalid-stage" });
+      }
+      if (state.mantecas < AMBU_HATCH_PRICE) {
+        return Object.freeze({
+          ok: false,
+          reason: "insufficient-mantecas",
+          price: AMBU_HATCH_PRICE,
+          missing: AMBU_HATCH_PRICE - state.mantecas,
+        });
+      }
+
+      state.mantecas -= AMBU_HATCH_PRICE;
+      state.stats.totalMantecasSpent = safeAdd(state.stats.totalMantecasSpent, AMBU_HATCH_PRICE);
+      state.ambu.stage = "hatching";
+      state.ambu.hatchTaps = 0;
+      const persisted = saveImmediately();
+      emit("ambu-egg-purchased", { price: AMBU_HATCH_PRICE, persisted });
+      return Object.freeze({ ok: true, price: AMBU_HATCH_PRICE, persisted, state: getSnapshot() });
+    }
+
+    function tapAmbuEgg() {
+      if (state.ambu.stage === "egg") {
+        return Object.freeze({ ok: false, reason: "payment-required", hatchTaps: 0 });
+      }
+      if (state.ambu.stage !== "hatching") {
+        return Object.freeze({ ok: false, reason: "invalid-stage", hatchTaps: state.ambu.hatchTaps });
+      }
+      if (state.ambu.hatchTaps >= AMBU_HATCH_TAPS) {
+        return Object.freeze({ ok: false, reason: "birth-pending", hatchTaps: AMBU_HATCH_TAPS });
+      }
+
+      state.ambu.hatchTaps += 1;
+      const persisted = saveImmediately();
+      emit("ambu-egg-tap", {
+        hatchTaps: state.ambu.hatchTaps,
+        complete: state.ambu.hatchTaps >= AMBU_HATCH_TAPS,
+        persisted,
+      });
+      return Object.freeze({
+        ok: true,
+        hatchTaps: state.ambu.hatchTaps,
+        complete: state.ambu.hatchTaps >= AMBU_HATCH_TAPS,
+        persisted,
+      });
+    }
+
+    function completeAmbuHatching() {
+      if (state.ambu.stage !== "hatching" || state.ambu.hatchTaps < AMBU_HATCH_TAPS) {
+        return Object.freeze({ ok: false, reason: "not-ready" });
+      }
+
+      state.ambu.stage = "baby";
+      state.ambu.hatchTaps = AMBU_HATCH_TAPS;
+      state.ambu.hatchedAt = Date.now();
+      const persisted = saveImmediately();
+      emit("ambu-hatched", { persisted });
+      return Object.freeze({ ok: true, persisted, state: getSnapshot() });
     }
 
     function getBackpack(backpackId) {
@@ -258,6 +354,7 @@
 
       state = saveStore.clone(imported);
       dirty = false;
+      discoverAmbu({ emitEvent: false });
       emit("import", { persisted: true });
       return getSnapshot();
     }
@@ -271,14 +368,22 @@
       return () => listeners.delete(listener);
     }
 
+    discoverAmbu({ emitEvent: false });
+
     return Object.freeze({
       getSnapshot,
       getMantecas: () => state.mantecas,
       getCounts: () => Object.assign({}, state.counts),
       getCount: (id) => COLLECTION_IDS.includes(id) ? state.counts[id] : 0,
       getStats: () => Object.assign({}, state.stats),
+      getAmbu,
       getTapValue,
       tap,
+      canPurchaseAmbuEgg,
+      purchaseAmbuEgg,
+      tapAmbuEgg,
+      completeAmbuHatching,
+      markAmbuNotificationSeen,
       canBuy,
       purchaseBackpack,
       purchaseBackpackDebug,

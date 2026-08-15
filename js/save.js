@@ -17,6 +17,7 @@
     "totalMantecasSpent",
   ]);
   const MAX_VALUE = Number.MAX_SAFE_INTEGER;
+  const AMBU_STAGES = Object.freeze(["locked", "egg", "hatching", "baby"]);
 
   let lastError = null;
 
@@ -39,12 +40,23 @@
     return Object.fromEntries(STAT_KEYS.map((key) => [key, 0]));
   }
 
+  function createAmbu() {
+    return {
+      stage: "locked",
+      hatchTaps: 0,
+      notificationSeen: false,
+      discoveredAt: 0,
+      hatchedAt: 0,
+    };
+  }
+
   function createDefault() {
     return {
       saveVersion: SAVE_VERSION,
       mantecas: 0,
       counts: createCounts(),
       stats: createStats(),
+      ambu: createAmbu(),
     };
   }
 
@@ -63,6 +75,7 @@
       totalMantecasEarned: source.totalMantecasEarned ?? source.earned,
       totalMantecasSpent: source.totalMantecasSpent ?? source.spent,
     };
+    migrated.ambu = source.ambu;
     migrated.saveVersion = SAVE_VERSION;
 
     return migrated;
@@ -80,6 +93,7 @@
     const migrated = version < SAVE_VERSION ? migrateLegacy(source) : source;
     const countsSource = isObject(migrated.counts) ? migrated.counts : {};
     const statsSource = isObject(migrated.stats) ? migrated.stats : {};
+    const ambuSource = isObject(migrated.ambu) ? migrated.ambu : {};
     const normalized = createDefault();
 
     normalized.mantecas = toSafeInteger(migrated.mantecas, 0);
@@ -91,6 +105,21 @@
     STAT_KEYS.forEach((key) => {
       normalized.stats[key] = toSafeInteger(statsSource[key], 0);
     });
+
+    normalized.ambu.stage = AMBU_STAGES.includes(ambuSource.stage) ? ambuSource.stage : "locked";
+    normalized.ambu.hatchTaps = Math.min(
+      toSafeInteger(config.ambu && config.ambu.hatchTaps, 15),
+      toSafeInteger(ambuSource.hatchTaps, 0),
+    );
+    normalized.ambu.notificationSeen = Boolean(ambuSource.notificationSeen);
+    normalized.ambu.discoveredAt = toSafeInteger(ambuSource.discoveredAt, 0);
+    normalized.ambu.hatchedAt = toSafeInteger(ambuSource.hatchedAt, 0);
+
+    if (normalized.ambu.stage === "locked" || normalized.ambu.stage === "egg") {
+      normalized.ambu.hatchTaps = 0;
+    } else if (normalized.ambu.stage === "baby") {
+      normalized.ambu.hatchTaps = toSafeInteger(config.ambu && config.ambu.hatchTaps, 15);
+    }
 
     return normalized;
   }

@@ -8,7 +8,7 @@
   <title>Lucio Lootbox Clicker</title>
   <link rel="stylesheet" href="css/effects.css?v=20260813-game-03">
   <link rel="stylesheet" href="css/opening.css?v=20260813-game-03">
-  <link rel="stylesheet" href="css/game.css?v=20260815-ambu-ui-01">
+  <link rel="stylesheet" href="css/game.css?v=20260815-ambu-hatch-01">
   <link rel="stylesheet" href="css/debug.css?v=20260813-game-03">
 </head>
 <body>
@@ -57,6 +57,51 @@
             </div>
             <div class="offline-bank__track" aria-hidden="true"><i data-offline-progress></i></div>
             <small>(<b data-offline-hours>3</b> hrs de producción actual)</small>
+          </section>
+        </div>
+      </section>
+
+      <section class="view ambu-view" data-view="ambu" aria-labelledby="ambu-title" tabindex="-1" hidden>
+        <button class="ambu-back" type="button" data-go-tap aria-label="Volver a la zona de tap">
+          <span aria-hidden="true">‹</span> Volver
+        </button>
+
+        <div class="ambu-wallet" aria-label="Mantecas disponibles">
+          <span>Tus Mantecas</span>
+          <strong><b data-ambu-mantecas>0</b> <i aria-hidden="true">🧈</i></strong>
+        </div>
+
+        <div class="ambu-stage" data-ambu-stage data-stage="egg">
+          <header class="ambu-stage__header">
+            <p data-ambu-kicker>HALLAZGO MISTERIOSO</p>
+            <h1 id="ambu-title" data-ambu-name>HUEVO MISTERIOSO</h1>
+            <span data-ambu-instruction>Hay algo vivo entre las barras de Manteca...</span>
+          </header>
+
+          <button class="ambu-character" type="button" data-ambu-character aria-label="Tocar el huevo misterioso">
+            <span class="ambu-character__aura" aria-hidden="true"></span>
+            <img data-ambu-sprite src="assets/invocados/Ambu_1.png" alt="Huevo misterioso" draggable="false">
+          </button>
+
+          <div class="ambu-hatch-progress" data-ambu-progress hidden>
+            <div><span>Cascarón</span><strong><b data-ambu-hits>0</b> / 15</strong></div>
+            <div class="ambu-hatch-progress__track" aria-hidden="true"><i data-ambu-progress-fill></i></div>
+          </div>
+
+          <section class="ambu-action-card" data-ambu-purchase>
+            <span>INCUBACIÓN</span>
+            <h2>¿Qué habrá dentro?</h2>
+            <p>Usa tus Mantecas para despertar el huevo y descubrir qué esconde.</p>
+            <button class="game-button game-button--primary game-button--wide" type="button" data-buy-ambu>
+              Eclosionar · 250.000 🧈
+            </button>
+            <small data-ambu-price-help></small>
+          </section>
+
+          <section class="ambu-baby-card" data-ambu-baby-card hidden>
+            <span>NUEVO COMPAÑERO</span>
+            <strong>Ambu bebé se ha unido a ti</strong>
+            <p>Parece hambriento, curioso y cargado de una energía extraña.</p>
           </section>
         </div>
       </section>
@@ -132,20 +177,20 @@
       <button class="settings-row" type="button" data-toggle-audio><span><strong>Sonido</strong><small data-audio-status>Activado</small></span><b data-audio-icon>🔊</b></button>
       <a class="settings-row" href="playground.html"><span><strong>Abrir playground</strong><small>Herramientas visuales y de apertura</small></span><b>↗</b></a>
       <button class="settings-row settings-row--danger" type="button" data-reset-progress><span><strong>Borrar progreso</strong><small>Requiere confirmación</small></span><b>⌫</b></button>
-      <div class="settings-meta">Save v<span data-save-version>1</span> · Guardado local automático</div>
+      <div class="settings-meta">Save v<span data-save-version>2</span> · Guardado local automático</div>
     </form>
   </dialog>
 
   <div class="game-toast" data-game-toast role="status" aria-live="polite"></div>
 
-  <script src="js/config.js?v=20260813-game-03"></script>
+  <script src="js/config.js?v=20260815-ambu-hatch-01"></script>
   <script src="js/lucio-renderer.js?v=20260813-game-03"></script>
   <script src="js/backpack-renderer.js?v=20260813-game-03"></script>
   <script src="js/audio.js?v=20260813-game-03"></script>
-  <script src="js/save.js?v=20260813-game-03"></script>
-  <script src="js/game-state.js?v=20260813-game-03"></script>
+  <script src="js/save.js?v=20260815-ambu-hatch-01"></script>
+  <script src="js/game-state.js?v=20260815-ambu-hatch-01"></script>
   <script src="js/collection.js?v=20260814-card-hover-02"></script>
-  <script src="js/game.js?v=20260815-ambu-ui-01"></script>
-  <script src="js/debug.js?v=20260813-game-03"></script>
+  <script src="js/game.js?v=20260815-ambu-hatch-01"></script>
+  <script src="js/debug.js?v=20260815-ambu-hatch-01"></script>
 </body>
 </html>
