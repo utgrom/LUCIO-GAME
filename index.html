@@ -8,7 +8,7 @@
   <title>Lucio Lootbox Clicker</title>
   <link rel="stylesheet" href="css/effects.css?v=20260813-game-03">
   <link rel="stylesheet" href="css/opening.css?v=20260813-game-03">
-  <link rel="stylesheet" href="css/game.css?v=20260814-card-hover-02">
+  <link rel="stylesheet" href="css/game.css?v=20260815-ambu-ui-01">
   <link rel="stylesheet" href="css/debug.css?v=20260813-game-03">
 </head>
 <body>
@@ -26,10 +26,18 @@
 
     <main class="game-main">
       <section class="view view--active tap-view" data-view="tap" aria-labelledby="tap-title" tabindex="-1">
+        <div class="tap-ambu-backdrop" data-tap-ambu-backdrop aria-hidden="true" hidden>
+          <img src="assets/invocados/Ambu_2.png" alt="" draggable="false">
+        </div>
+        <button class="tap-subview-arrow" type="button" data-open-ambu aria-label="Visitar el huevo misterioso" hidden>
+          <span aria-hidden="true">›</span>
+          <img src="assets/invocados/Ambu_1.png" alt="" draggable="false">
+        </button>
+
         <div class="wallet-card">
           <span class="wallet-card__label">Tus Mantecas</span>
           <strong class="wallet-card__amount"><span data-mantecas>0</span> <span aria-hidden="true">🧈</span></strong>
-          <span class="wallet-card__rate"><b data-tap-value>1</b> 🧈 por tap</span>
+          <span class="wallet-card__rate" data-passive-rate hidden><b data-passive-per-second>0</b> 🧈/s</span>
         </div>
 
         <button class="tap-zone" type="button" data-tap-zone aria-labelledby="tap-title tap-help">
@@ -40,11 +48,17 @@
         </button>
         <div class="tap-feedback-layer" data-tap-feedback aria-hidden="true"></div>
 
-        <section class="quick-progress" aria-label="Progreso actual">
-          <div><span>Lucios</span><strong data-total-lucios>0</strong></div>
-          <div><span>Mochilas</span><strong data-total-backpacks>0</strong></div>
-          <div><span>Taps</span><strong data-total-taps>0</strong></div>
-        </section>
+        <div class="tap-footer-slot">
+          <section class="offline-bank" data-offline-bank aria-label="Producción offline" hidden>
+            <button class="offline-bank__collect" type="button" data-collect-offline hidden>Recoger</button>
+            <div class="offline-bank__copy">
+              <span>Producción offline</span>
+              <strong><b data-offline-stored>0</b> / <b data-offline-capacity>0</b> 🧈</strong>
+            </div>
+            <div class="offline-bank__track" aria-hidden="true"><i data-offline-progress></i></div>
+            <small>(<b data-offline-hours>3</b> hrs de producción actual)</small>
+          </section>
+        </div>
       </section>
 
       <section class="view shop-view" data-view="shop" aria-labelledby="shop-title" tabindex="-1" hidden>
@@ -52,6 +66,7 @@
           <p>LOOT SHOP</p>
           <h1 id="shop-title">Elige tu mochila</h1>
           <span>Mejores tiers aumentan tus probabilidades de rarezas y Shiny.</span>
+          <div class="view-heading__metric"><span>Mochilas abiertas</span><strong data-total-backpacks>0</strong></div>
         </header>
         <div class="shop-grid" data-shop-grid></div>
       </section>
@@ -62,6 +77,10 @@
           <h1 id="collection-title">Lucios descubiertos</h1>
           <span>Los duplicados aumentan permanentemente tus Mantecas por tap.</span>
         </header>
+        <section class="collection-summary" aria-label="Resumen de colección">
+          <div><span>Mantecas por tap</span><strong><b data-tap-value>1</b> 🧈</strong></div>
+          <div><span>Lucios totales</span><strong data-total-lucios>0</strong></div>
+        </section>
         <div class="collection-empty" data-collection-empty>
           <span aria-hidden="true">?</span>
           <strong>Todavía no descubriste ningún Lucio</strong>
@@ -126,7 +145,7 @@
   <script src="js/save.js?v=20260813-game-03"></script>
   <script src="js/game-state.js?v=20260813-game-03"></script>
   <script src="js/collection.js?v=20260814-card-hover-02"></script>
-  <script src="js/game.js?v=20260813-game-03"></script>
+  <script src="js/game.js?v=20260815-ambu-ui-01"></script>
   <script src="js/debug.js?v=20260813-game-03"></script>
 </body>
 </html>

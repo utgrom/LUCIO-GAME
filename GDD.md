@@ -341,11 +341,27 @@ Los pasos de huevo, alimentación y eclosión son gastos impulsados inicialmente
 | Adulto | Permite equipar dos auras simultáneamente y mejora su capacidad de combate. |
 | Maestro | Desbloquea auras nivel 3, creación del Lucio Multimaterial, auras Gábicas de v4 y nuevas ventajas de combate. |
 
-La producción de **10 Mantecas por segundo** para Bebé es sólo una referencia temprana, no un valor confirmado.
+Ambu Bebé ejecuta inicialmente un pulso equivalente al valor actual de un tap cada `1.000 ms`. Ambu Niño reduce ese intervalo a `800 ms`. Las etapas posteriores podrán reducirlo mucho más; por ejemplo, un intervalo de `100 ms` equivale a diez pulsos por segundo antes de aplicar otros modificadores.
 
 ## 10. Producción pasiva y offline
 
 **Decidido.** Amvorguezo será el responsable de la producción pasiva y offline. Los Lucios seguirán aportando principalmente al valor por tap.
+
+La cifra mostrada como **Mantecas/s** es siempre una tasa final derivada, no un valor fijo ni un simple contador de taps. Conceptualmente:
+
+```text
+Pulsos por segundo = 1.000 / intervalo actual en milisegundos
+
+Producción pasiva base = valor actual por tap
+                         × pulsos por segundo
+
+Mantecas/s finales = producción pasiva base
+                     × modificadores de velocidad
+                     × modificadores de producción pasiva
+                     × otros efectos explícitos
+```
+
+La economía debe exponer una única función para calcular esta tasa final. La interfaz, la acumulación online, la producción offline y las futuras recompensas expresadas en tiempo de producción deben consultar esa misma función, evitando duplicar fórmulas o guardar `Mantecas/s` como un dato independiente.
 
 Esto permite que auras diferentes creen combinaciones emergentes, por ejemplo:
 
@@ -356,7 +372,7 @@ Esto permite que auras diferentes creen combinaciones emergentes, por ejemplo:
 
 La interacción entre esos efectos no necesita un nombre de combo ni un bonus oculto adicional.
 
-**Balance pendiente:** producción base de cada etapa, duración offline máxima y fórmula exacta de acumulación.
+**Decidido para el primer hito:** Bebé usa un intervalo de `1.000 ms` y una capacidad offline de 3 horas; Niño usará `800 ms` y 8 horas. La fórmula completa de modificadores para etapas posteriores sigue pendiente de balance.
 
 ## 11. Auras de material
 
