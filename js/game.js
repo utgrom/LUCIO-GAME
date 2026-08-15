@@ -18,7 +18,6 @@
     tapValue: document.querySelector("[data-tap-value]"),
     totalLucios: document.querySelector("[data-total-lucios]"),
     totalBackpacks: document.querySelector("[data-total-backpacks]"),
-    totalTaps: document.querySelector("[data-total-taps]"),
     tapZone: document.querySelector("[data-tap-zone]"),
     tapFeedback: document.querySelector("[data-tap-feedback]"),
     shopGrid: document.querySelector("[data-shop-grid]"),
@@ -179,7 +178,6 @@
     elements.tapValue.textContent = formatNumber(tapValue);
     elements.totalLucios.textContent = formatNumber(totalCopies(snapshot.counts));
     elements.totalBackpacks.textContent = formatNumber(snapshot.stats.backpacksOpened);
-    elements.totalTaps.textContent = formatNumber(snapshot.stats.totalTaps);
     updateShopAffordability();
   }
 
