@@ -211,6 +211,11 @@ try {
     Assert-True $largeCollection.more 'coleccion grande muestra ellipsis'
     Assert-True ($largeCollection.lastOpacity -lt 0.2) 'coleccion grande aplica fade'
 
+    $touchHover = Invoke-PageScript -Expression 'new Promise(resolve=>setTimeout(()=>{const copies=document.querySelectorAll("[data-variant=bronze] .collection-lucio");const first=copies[0].getBoundingClientRect();const second=copies[1].getBoundingClientRect();const pointerId=7;copies[0].dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,pointerType:"touch",pointerId,clientX:first.left+1,clientY:first.top+20}));const firstLifted=copies[0].classList.contains("is-lifted");copies[0].dispatchEvent(new PointerEvent("pointermove",{bubbles:true,pointerType:"touch",pointerId,clientX:second.left+1,clientY:second.top+20}));const followed=copies[1].classList.contains("is-lifted")&&!copies[0].classList.contains("is-lifted");copies[0].dispatchEvent(new PointerEvent("pointerup",{bubbles:true,pointerType:"touch",pointerId,clientX:second.left+1,clientY:second.top+20}));resolve({firstLifted,followed,released:!document.querySelector(".collection-lucio.is-lifted")})},220))'
+    Assert-True $touchHover.firstLifted 'mantener el dedo levanta un Lucio'
+    Assert-True $touchHover.followed 'deslizar el dedo mueve el hover entre Lucios'
+    Assert-True $touchHover.released 'soltar el dedo baja el Lucio'
+
     if ($CollectionScreenshotPath) { Save-CdpScreenshot -Path $CollectionScreenshotPath }
 
     Invoke-Cdp -Method 'Page.reload' -Params @{ ignoreCache = $true } | Out-Null
