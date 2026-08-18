@@ -65,6 +65,8 @@
     let dirty = false;
     let saveTimer = null;
 
+    let onlineSubTick = 0;
+
     function getSnapshot() {
       return saveStore.clone(state);
     }
@@ -81,11 +83,56 @@
       return Math.min(MAX_VALUE, Math.floor(total));
     }
 
+    function getPassiveRate() {
+      const stageConfig = (config.ambu && config.ambu.stages && config.ambu.stages[state.ambu.stage]) || null;
+      if (!stageConfig || !stageConfig.intervalMs || stageConfig.intervalMs <= 0) {
+        return Object.freeze({
+          active: false,
+          intervalMs: 0,
+          pulsesPerSecond: 0,
+          ratePerSecond: 0,
+          offlineCapHours: 0,
+          offlineCapacity: 0,
+        });
+      }
+
+      const intervalMs = stageConfig.intervalMs;
+      const pulsesPerSecond = 1000 / intervalMs;
+      const tapValue = getTapValue();
+      const ratePerSecond = tapValue * pulsesPerSecond;
+      const offlineCapHours = stageConfig.offlineCapHours || 0;
+      const offlineCapacity = Math.min(MAX_VALUE, Math.floor(ratePerSecond * offlineCapHours * 3600));
+
+      return Object.freeze({
+        active: true,
+        intervalMs,
+        pulsesPerSecond,
+        ratePerSecond,
+        offlineCapHours,
+        offlineCapacity,
+      });
+    }
+
+    function getAmbuOfflineStatus() {
+      const passive = getPassiveRate();
+      return Object.freeze({
+        stage: state.ambu.stage,
+        active: passive.active,
+        offlineStored: state.ambu.offlineStored,
+        offlineCapacity: passive.offlineCapacity,
+        offlineCapHours: passive.offlineCapHours,
+        ratePerSecond: passive.ratePerSecond,
+        timeDebtMs: state.ambu.timeDebtMs,
+        lastActiveTimestamp: state.ambu.lastActiveTimestamp,
+      });
+    }
+
     function emit(type, detail) {
       const event = Object.freeze(Object.assign({
         type,
         state: getSnapshot(),
         tapValue: getTapValue(),
+        passiveRate: getPassiveRate(),
       }, detail));
 
       listeners.forEach((listener) => {
@@ -131,6 +178,138 @@
 
       dirty = true;
       return flush();
+    }
+
+    function resolveOfflineCatchup(nowTimestamp, options) {
+      const settings = Object.assign({ emitEvent: true }, options);
+      const now = Number.isFinite(nowTimestamp) && nowTimestamp > 0 ? nowTimestamp : Date.now();
+      const passive = getPassiveRate();
+
+      if (!passive.active) {
+        state.ambu.lastActiveTimestamp = now;
+        return Object.freeze({
+          ok: true,
+          produced: 0,
+          timeDebtMs: state.ambu.timeDebtMs,
+          offlineStored: state.ambu.offlineStored,
+        });
+      }
+
+      const last = state.ambu.lastActiveTimestamp || now;
+      const deltaMs = now - last;
+
+      if (deltaMs < 0) {
+        const debtIncrement = Math.abs(deltaMs);
+        state.ambu.timeDebtMs = safeAdd(state.ambu.timeDebtMs, debtIncrement);
+        state.ambu.lastActiveTimestamp = now;
+        saveImmediately();
+        if (settings.emitEvent) {
+          emit("ambu-clock-rollback", { debtIncrement, timeDebtMs: state.ambu.timeDebtMs });
+        }
+        return Object.freeze({
+          ok: true,
+          produced: 0,
+          rollbackDetected: true,
+          timeDebtMs: state.ambu.timeDebtMs,
+          offlineStored: state.ambu.offlineStored,
+        });
+      }
+
+      let effectiveDeltaMs = deltaMs;
+
+      if (state.ambu.timeDebtMs > 0) {
+        const payDebt = Math.min(state.ambu.timeDebtMs, effectiveDeltaMs);
+        state.ambu.timeDebtMs -= payDebt;
+        effectiveDeltaMs -= payDebt;
+      }
+
+      let produced = 0;
+      if (effectiveDeltaMs > 0 && passive.ratePerSecond > 0) {
+        const rawProduced = (effectiveDeltaMs / 1000) * passive.ratePerSecond;
+        const maxCanAdd = Math.max(0, passive.offlineCapacity - state.ambu.offlineStored);
+        produced = Math.min(maxCanAdd, Math.floor(rawProduced));
+        state.ambu.offlineStored = safeAdd(state.ambu.offlineStored, produced);
+      }
+
+      state.ambu.lastActiveTimestamp = now;
+
+      if (produced > 0 || deltaMs > 0) {
+        saveImmediately();
+        if (settings.emitEvent) {
+          emit("ambu-offline-accumulated", { produced, offlineStored: state.ambu.offlineStored });
+        }
+      }
+
+      return Object.freeze({
+        ok: true,
+        produced,
+        effectiveDeltaMs,
+        timeDebtMs: state.ambu.timeDebtMs,
+        offlineStored: state.ambu.offlineStored,
+      });
+    }
+
+    function tickOnline(deltaMs, nowTimestamp) {
+      const now = Number.isFinite(nowTimestamp) && nowTimestamp > 0 ? nowTimestamp : Date.now();
+      const passive = getPassiveRate();
+
+      if (!passive.active || passive.ratePerSecond <= 0) {
+        state.ambu.lastActiveTimestamp = now;
+        return 0;
+      }
+
+      if (now < state.ambu.lastActiveTimestamp) {
+        const debt = state.ambu.lastActiveTimestamp - now;
+        state.ambu.timeDebtMs = safeAdd(state.ambu.timeDebtMs, debt);
+        state.ambu.lastActiveTimestamp = now;
+        scheduleSave();
+        return 0;
+      }
+
+      const dt = Math.max(0, Number.isFinite(deltaMs) ? deltaMs : (now - (state.ambu.lastActiveTimestamp || now)));
+
+      if (state.ambu.timeDebtMs > 0) {
+        const payDebt = Math.min(state.ambu.timeDebtMs, dt);
+        state.ambu.timeDebtMs -= payDebt;
+        state.ambu.lastActiveTimestamp = now;
+        return 0;
+      }
+
+      onlineSubTick += (dt / 1000) * passive.ratePerSecond;
+      const gained = Math.floor(onlineSubTick);
+
+      if (gained > 0) {
+        onlineSubTick -= gained;
+        state.mantecas = safeAdd(state.mantecas, gained);
+        state.stats.totalMantecasEarned = safeAdd(state.stats.totalMantecasEarned, gained);
+        scheduleSave();
+        emit("ambu-online-produced", { gained });
+      }
+
+      state.ambu.lastActiveTimestamp = now;
+      return gained;
+    }
+
+    function collectOffline() {
+      const stored = state.ambu.offlineStored;
+      if (stored <= 0) {
+        return Object.freeze({ ok: false, reason: "empty-bank", collected: 0 });
+      }
+
+      state.mantecas = safeAdd(state.mantecas, stored);
+      state.stats.totalMantecasEarned = safeAdd(state.stats.totalMantecasEarned, stored);
+      state.ambu.offlineStored = 0;
+      state.ambu.lastActiveTimestamp = Date.now();
+      const persisted = saveImmediately();
+      emit("ambu-offline-collected", { collected: stored, persisted });
+
+      return Object.freeze({
+        ok: true,
+        collected: stored,
+        mantecas: state.mantecas,
+        persisted,
+        state: getSnapshot(),
+      });
     }
 
     function discoverAmbu(options) {
@@ -228,9 +407,14 @@
         return Object.freeze({ ok: false, reason: "not-ready" });
       }
 
+      const now = Date.now();
       state.ambu.stage = "baby";
       state.ambu.hatchTaps = AMBU_HATCH_TAPS;
-      state.ambu.hatchedAt = Date.now();
+      state.ambu.hatchedAt = now;
+      state.ambu.lastActiveTimestamp = now;
+      state.ambu.offlineStored = 0;
+      state.ambu.timeDebtMs = 0;
+      onlineSubTick = 0;
       const persisted = saveImmediately();
       emit("ambu-hatched", { persisted });
       return Object.freeze({ ok: true, persisted, state: getSnapshot() });
@@ -333,6 +517,7 @@
         saveTimer = null;
       }
 
+      onlineSubTick = 0;
       state = saveStore.createDefault();
       dirty = false;
       const persisted = saveStore.remove();
@@ -352,9 +537,13 @@
         saveTimer = null;
       }
 
+      onlineSubTick = 0;
       state = saveStore.clone(imported);
       dirty = false;
       discoverAmbu({ emitEvent: false });
+      if (state.ambu.stage === "baby") {
+        resolveOfflineCatchup(Date.now(), { emitEvent: false });
+      }
       emit("import", { persisted: true });
       return getSnapshot();
     }
@@ -369,6 +558,9 @@
     }
 
     discoverAmbu({ emitEvent: false });
+    if (state.ambu.stage === "baby") {
+      resolveOfflineCatchup(Date.now(), { emitEvent: false });
+    }
 
     return Object.freeze({
       getSnapshot,
@@ -377,6 +569,8 @@
       getCount: (id) => COLLECTION_IDS.includes(id) ? state.counts[id] : 0,
       getStats: () => Object.assign({}, state.stats),
       getAmbu,
+      getPassiveRate,
+      getAmbuOfflineStatus,
       getTapValue,
       tap,
       canPurchaseAmbuEgg,
@@ -384,6 +578,9 @@
       tapAmbuEgg,
       completeAmbuHatching,
       markAmbuNotificationSeen,
+      resolveOfflineCatchup,
+      tickOnline,
+      collectOffline,
       canBuy,
       purchaseBackpack,
       purchaseBackpackDebug,

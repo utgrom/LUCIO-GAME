@@ -81,6 +81,11 @@
             <button type="button" data-debug-ambu-stage="hatching">Eclosión</button>
             <button type="button" data-debug-ambu-stage="baby">Bebé</button>
           </div>
+          <div class="lucio-debug__presets" aria-label="Simulación de tiempo offline" style="margin-top: 6px;">
+            <button type="button" data-debug-simulate-offline="3600">+1h offline</button>
+            <button type="button" data-debug-simulate-offline="10800">+3h offline</button>
+            <button type="button" data-debug-simulate-rollback="600">Retroceder 10m</button>
+          </div>
         </section>
 
         <section class="lucio-debug__section" aria-labelledby="debug-reward-title">
@@ -199,10 +204,39 @@
           notificationSeen: stage !== "locked",
           discoveredAt: stage === "locked" ? 0 : Date.now(),
           hatchedAt: stage === "baby" ? Date.now() : 0,
+          lastActiveTimestamp: stage === "baby" ? Date.now() : 0,
+          offlineStored: 0,
+          timeDebtMs: 0,
         };
       });
       report(`Ambu quedó en etapa: ${stage}.`);
       return result;
+    }
+
+    function simulateOfflineTime(seconds) {
+      const ms = Math.max(1, readAmount(seconds, 3600)) * 1000;
+      const snapshot = state.getSnapshot();
+      if (!snapshot.ambu || snapshot.ambu.stage !== "baby") {
+        throw new Error("Ambu debe estar en etapa 'baby' para simular tiempo offline.");
+      }
+      snapshot.ambu.lastActiveTimestamp = (snapshot.ambu.lastActiveTimestamp || Date.now()) - ms;
+      state.importSnapshot(JSON.stringify(snapshot));
+      const catchup = state.resolveOfflineCatchup(Date.now());
+      report(`Simuladas ${Math.round(ms / 1000)}s offline. Banco: ${catchup.offlineStored.toLocaleString("es-AR")} 🧈.`);
+      return catchup;
+    }
+
+    function simulateClockRollback(seconds) {
+      const ms = Math.max(1, readAmount(seconds, 600)) * 1000;
+      const snapshot = state.getSnapshot();
+      if (!snapshot.ambu || snapshot.ambu.stage !== "baby") {
+        throw new Error("Ambu debe estar en etapa 'baby' para simular retroceso de reloj.");
+      }
+      snapshot.ambu.lastActiveTimestamp = Date.now() + ms;
+      state.importSnapshot(JSON.stringify(snapshot));
+      const catchup = state.resolveOfflineCatchup(Date.now());
+      report(`Simulado retroceso de reloj. Deuda temporal: ${Math.round(catchup.timeDebtMs / 1000)}s.`);
+      return catchup;
     }
 
     function populateDuplicates(amount = 50, all = false) {
@@ -312,6 +346,12 @@
     panel.querySelectorAll("[data-debug-ambu-stage]").forEach((button) => {
       button.addEventListener("click", () => safely(() => setAmbuStage(button.dataset.debugAmbuStage)));
     });
+    panel.querySelectorAll("[data-debug-simulate-offline]").forEach((button) => {
+      button.addEventListener("click", () => safely(() => simulateOfflineTime(button.dataset.debugSimulateOffline)));
+    });
+    panel.querySelectorAll("[data-debug-simulate-rollback]").forEach((button) => {
+      button.addEventListener("click", () => safely(() => simulateClockRollback(button.dataset.debugSimulateRollback)));
+    });
     panel.querySelector("[data-debug-grant]").addEventListener("click", () => safely(() => grantVariant(elements.variant.value, elements.grantCount.value)));
     panel.querySelectorAll("[data-debug-duplicates]").forEach((button) => {
       button.addEventListener("click", () => safely(() => populateDuplicates(elements.duplicateCount.value, button.dataset.debugDuplicates === "all")));
@@ -335,6 +375,8 @@
       addMantecas,
       resetMantecas,
       setAmbuStage,
+      simulateOfflineTime,
+      simulateClockRollback,
       grantVariant,
       populateDuplicates,
       openFree,

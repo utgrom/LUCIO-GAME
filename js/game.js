@@ -33,6 +33,14 @@
     toast: document.querySelector("[data-game-toast]"),
     openAmbu: document.querySelector("[data-open-ambu]"),
     tapAmbuBackdrop: document.querySelector("[data-tap-ambu-backdrop]"),
+    passiveRate: document.querySelector("[data-passive-rate]"),
+    passivePerSecond: document.querySelector("[data-passive-per-second]"),
+    offlineBank: document.querySelector("[data-offline-bank]"),
+    collectOffline: document.querySelector("[data-collect-offline]"),
+    offlineStored: document.querySelector("[data-offline-stored]"),
+    offlineCapacity: document.querySelector("[data-offline-capacity]"),
+    offlineProgress: document.querySelector("[data-offline-progress]"),
+    offlineHours: document.querySelector("[data-offline-hours]"),
     ambuMantecas: document.querySelector("[data-ambu-mantecas]"),
     ambuStage: document.querySelector("[data-ambu-stage]"),
     ambuKicker: document.querySelector("[data-ambu-kicker]"),
@@ -194,12 +202,35 @@
   function renderEconomy() {
     const snapshot = state.getSnapshot();
     const tapValue = state.getTapValue();
+    const passive = state.getPassiveRate();
+    const ambu = snapshot.ambu;
+
     elements.mantecas.textContent = formatNumber(snapshot.mantecas);
     elements.headerMantecas.textContent = formatNumber(snapshot.mantecas);
     elements.ambuMantecas.textContent = formatNumber(snapshot.mantecas);
     elements.tapValue.textContent = formatNumber(tapValue);
     elements.totalLucios.textContent = formatNumber(totalCopies(snapshot.counts));
     elements.totalBackpacks.textContent = formatNumber(snapshot.stats.backpacksOpened);
+
+    if (elements.passiveRate && elements.passivePerSecond) {
+      elements.passiveRate.hidden = !passive.active;
+      elements.passivePerSecond.textContent = formatNumber(passive.ratePerSecond);
+    }
+
+    if (elements.offlineBank) {
+      elements.offlineBank.hidden = !passive.active;
+      if (elements.offlineStored) elements.offlineStored.textContent = formatNumber(ambu.offlineStored);
+      if (elements.offlineCapacity) elements.offlineCapacity.textContent = formatNumber(passive.offlineCapacity);
+      if (elements.offlineHours) elements.offlineHours.textContent = String(passive.offlineCapHours);
+      if (elements.offlineProgress) {
+        const pct = passive.offlineCapacity > 0 ? Math.min(100, (ambu.offlineStored / passive.offlineCapacity) * 100) : 0;
+        elements.offlineProgress.style.width = `${pct}%`;
+      }
+      if (elements.collectOffline) {
+        elements.collectOffline.hidden = ambu.offlineStored < 1;
+      }
+    }
+
     updateShopAffordability();
   }
 
@@ -473,11 +504,22 @@
     },
   });
 
+  function collectOfflineMantecas() {
+    const result = state.collectOffline();
+    if (result.ok && result.collected > 0) {
+      audio.play("pop");
+      showToast(`¡Recogiste ${formatNumber(result.collected)} 🧈 de producción offline!`, "success", 3200);
+    }
+  }
+
   state.subscribe((event) => {
     renderEconomy();
     renderAmbu();
     if (["purchase", "reset", "import"].includes(event.type)) renderCollection();
     if (event.type === "ambu-discovered") announceAmbuDiscovery();
+    if (event.type === "ambu-clock-rollback") {
+      showToast("Se detectó un cambio en el reloj del dispositivo. La producción offline se pausó temporalmente.", "warning", 5000);
+    }
   });
 
   elements.tapZone.addEventListener("click", (event) => performTap(event));
@@ -491,6 +533,7 @@
   elements.openAmbu.addEventListener("click", () => navigate("ambu"));
   elements.ambuCharacter.addEventListener("click", touchAmbu);
   elements.buyAmbu.addEventListener("click", buyAmbuEgg);
+  elements.collectOffline?.addEventListener("click", collectOfflineMantecas);
 
   elements.shopGrid.addEventListener("click", (event) => {
     const button = event.target.closest("[data-buy-backpack]");
@@ -528,10 +571,37 @@
     audio.play("tap");
   });
 
+  let lastFrameTime = performance.now();
+
+  function onlineLoop(currentTime) {
+    const deltaMs = Math.min(2000, Math.max(0, currentTime - lastFrameTime));
+    lastFrameTime = currentTime;
+
+    if (deltaMs > 0 && state.getPassiveRate().active) {
+      state.tickOnline(deltaMs, Date.now());
+    }
+
+    requestAnimationFrame(onlineLoop);
+  }
+
+  requestAnimationFrame((time) => {
+    lastFrameTime = time;
+    onlineLoop(time);
+  });
+
   window.addEventListener("pagehide", () => state.flush());
   window.addEventListener("popstate", () => navigate(viewFromLocation(), { focus: false, history: false }));
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") state.flush();
+    if (document.visibilityState === "hidden") {
+      state.flush();
+    } else {
+      lastFrameTime = performance.now();
+      state.resolveOfflineCatchup(Date.now());
+    }
+  });
+  window.addEventListener("focus", () => {
+    lastFrameTime = performance.now();
+    state.resolveOfflineCatchup(Date.now());
   });
 
   elements.saveVersion.textContent = String(config.saveVersion);
@@ -553,6 +623,7 @@
     navigate,
     buyBackpack,
     buyBackpackDebug,
+    collectOffline: collectOfflineMantecas,
     get activeView() { return activeView; },
     get collectionHasUpdate() { return collectionHasUpdate; },
     get purchasedReward() { return purchasedReward; },

@@ -13,6 +13,17 @@
       hatchPrice: 250000,
       hatchTaps: 15,
       hatchDelayMs: 1450,
+      stages: {
+        baby: {
+          intervalMs: 1000,
+          offlineCapHours: 3,
+        },
+        child: {
+          intervalMs: 800,
+          offlineCapHours: 8,
+          evolutionPrice: 1000000,
+        },
+      },
       sprites: {
         egg: "assets/invocados/Ambu_1.png",
         crack1: "assets/invocados/Ambu_1_1.png",
