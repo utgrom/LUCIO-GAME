@@ -669,6 +669,192 @@ input[type="color"] {
   .backpack-wrap { width: 370px; }
 }
 
+/* Ambu Playground Styles */
+.ambu-stage-host {
+  position: relative;
+  display: grid;
+  min-height: 480px;
+  place-items: center;
+  border-radius: 18px;
+  overflow: hidden;
+  transition: background 240ms ease;
+}
+
+.ambu-stage-host[data-bg-mode="studio"] {
+  background:
+    radial-gradient(circle at 50% 30%, rgba(200, 255, 107, 0.08), transparent 60%),
+    radial-gradient(circle at center, #121815, #080a0d 75%);
+}
+
+.ambu-stage-host[data-bg-mode="tap-backdrop"] {
+  background:
+    radial-gradient(circle at 50% 30%, rgba(255, 137, 31, 0.12), transparent 60%),
+    #0c0f13;
+}
+
+.ambu-stage-host[data-bg-mode="transparent"] {
+  background:
+    linear-gradient(45deg, #121519 25%, transparent 25%),
+    linear-gradient(-45deg, #121519 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #121519 75%),
+    linear-gradient(-45deg, transparent 75%, #121519 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+  background-color: #07090c;
+}
+
+.ambu-stage-backdrop-layer {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.ambu-stage-backdrop-layer img {
+  width: min(80vw, 560px);
+  filter: blur(16px) saturate(0.8);
+  opacity: 0.85;
+  transform: scale(1.08);
+}
+
+.ambu-character-wrap {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+}
+
+.ambu-character {
+  position: relative;
+  display: grid;
+  width: min(64vw, 380px);
+  aspect-ratio: 1;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.ambu-character__aura {
+  position: absolute;
+  z-index: 1;
+  inset: 12%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(181, 255, 119, 0.2), transparent 68%);
+  opacity: 0.75;
+  animation: ambu-aura 3.4s ease-in-out infinite;
+}
+
+.ambu-character img {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 26px 24px rgba(0, 0, 0, 0.5));
+  pointer-events: none;
+  transform-origin: 50% 82%;
+  will-change: transform, opacity;
+}
+
+.ambu-character:not(.is-birthing):not(.is-arriving) img {
+  animation: ambu-baby-breathe 4s ease-in-out infinite;
+}
+
+.ambu-character.is-tapped img { animation: ambu-egg-tap 420ms cubic-bezier(.36,.07,.19,.97); }
+.ambu-character.is-birthing img { animation: ambu-egg-birth 1.35s cubic-bezier(.4,0,.2,1) both; }
+.ambu-character.is-arriving img { animation: ambu-baby-arrive 720ms cubic-bezier(.2,.9,.25,1.2) both; }
+
+.ambu-stats-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.ambu-stat {
+  display: grid;
+  gap: 4px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.ambu-stat span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.ambu-stat strong {
+  color: #fff;
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.status-dot--blink {
+  background: #ffb15f !important;
+  box-shadow: 0 0 10px #ff8a1f !important;
+}
+
+.slider-field {
+  display: grid;
+  gap: 6px;
+}
+
+.slider-field__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.slider-field__head output {
+  color: #fff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 700;
+}
+
+@keyframes ambu-aura {
+  0%, 100% { transform: scale(1); opacity: .55; }
+  50% { transform: scale(1.08); opacity: .85; }
+}
+
+@keyframes ambu-baby-breathe {
+  0%, 100% { transform: scale(1, 1); }
+  50% { transform: scale(0.985, 1.025) translateY(-2px); }
+}
+
+@keyframes ambu-egg-tap {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  24% { transform: rotate(-6deg) scale(.98); }
+  50% { transform: rotate(6deg) scale(1.025); }
+  74% { transform: rotate(-3deg) scale(.995); }
+}
+
+@keyframes ambu-egg-birth {
+  0% { transform: scale(1); filter: brightness(1) drop-shadow(0 26px 24px rgba(0, 0, 0, .46)); }
+  18% { transform: scaleX(1.08) scaleY(.88); }
+  38% { transform: scaleX(.89) scaleY(1.18); }
+  58% { transform: scaleX(1.11) scaleY(.84); }
+  76% { transform: scaleX(.92) scaleY(1.2); filter: brightness(1.25) drop-shadow(0 0 32px rgba(255, 211, 151, .62)); }
+  100% { transform: scale(.35); filter: brightness(2) drop-shadow(0 0 45px rgba(255, 235, 199, .9)); opacity: 0; }
+}
+
+@keyframes ambu-baby-arrive {
+  0% { transform: scale(.2) translateY(24px); opacity: 0; filter: brightness(1.7) drop-shadow(0 0 40px rgba(200, 255, 107, .8)); }
+  55% { transform: scale(1.08) translateY(-8px); opacity: 1; filter: brightness(1.2) drop-shadow(0 26px 24px rgba(0, 0, 0, .46)); }
+  75% { transform: scale(.97) translateY(2px); }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { scroll-behavior: auto !important; }

@@ -345,7 +345,7 @@ try {
     Assert-True $collected.collectHidden 'boton recoger vuelve a ocultarse tras recoger'
 
     # Anti-cheat: Clock Rollback detection and Time Debt
-    $antiCheat = Invoke-PageScript -Expression '(()=>{const now=Date.now();const save=GameState.getSnapshot();save.ambu.lastActiveTimestamp=now;save.ambu.timeDebtMs=0;save.ambu.offlineStored=0;GameState.importSnapshot(save);const rollback=GameState.resolveOfflineCatchup(now-600000);const debt1=GameState.getAmbu().timeDebtMs;const stored1=GameState.getAmbu().offlineStored;const payPartial=GameState.resolveOfflineCatchup(now-600000+240000);const debt2=GameState.getAmbu().timeDebtMs;const stored2=GameState.getAmbu().offlineStored;const clearDebt=GameState.resolveOfflineCatchup(now-600000+240000+600000);const debt3=GameState.getAmbu().timeDebtMs;const stored3=GameState.getAmbu().offlineStored;return {debt1,stored1,debt2,stored2,debt3,stored3}})()'
+    $antiCheat = Invoke-PageScript -Expression '(()=>{const save=GameState.getSnapshot();save.ambu.lastActiveTimestamp=Date.now();save.ambu.timeDebtMs=0;save.ambu.offlineStored=0;GameState.importSnapshot(save);const actualLast=GameState.getAmbu().lastActiveTimestamp;const rollback=GameState.resolveOfflineCatchup(actualLast-600000);const debt1=GameState.getAmbu().timeDebtMs;const stored1=GameState.getAmbu().offlineStored;const payPartial=GameState.resolveOfflineCatchup(actualLast-600000+240000);const debt2=GameState.getAmbu().timeDebtMs;const stored2=GameState.getAmbu().offlineStored;const clearDebt=GameState.resolveOfflineCatchup(actualLast-600000+240000+600000);const debt3=GameState.getAmbu().timeDebtMs;const stored3=GameState.getAmbu().offlineStored;return {debt1,stored1,debt2,stored2,debt3,stored3}})()'
     Assert-Equal $antiCheat.debt1 600000 'retroceso de reloj de 10 min genera deuda temporal de 600.000ms'
     Assert-Equal $antiCheat.stored1 0 'retroceso no genera produccion offline'
     Assert-Equal $antiCheat.debt2 360000 'tiempo posterior amortiza deuda a 360.000ms'
@@ -368,6 +368,51 @@ try {
     Assert-Equal $reset.total 0 'reset borra coleccion'
     Assert-Equal $reset.stage 'locked' 'reset bloquea a Ambu'
     Assert-Equal $reset.stored $null 'reset elimina save persistente'
+
+    # -------------------------------------------------------------
+    # Playground.html Ambu Section Verification
+    # -------------------------------------------------------------
+    Invoke-Cdp -Method 'Page.navigate' -Params @{ url = 'http://localhost:8765/playground.html' } | Out-Null
+    $playgroundLoaded = $false
+    for ($attempt = 0; $attempt -lt 80 -and -not $playgroundLoaded; $attempt += 1) {
+        Start-Sleep -Milliseconds 100
+        $playgroundLoaded = Invoke-PageScript -Expression 'document.readyState === "complete" && Boolean(window.AmbuRenderer) && Boolean(document.querySelector("[data-ambu-playground-root]"))'
+    }
+    Assert-True $playgroundLoaded 'playground.html carga correctamente con AmbuRenderer y seccion 03'
+
+    $playgroundAmbu = Invoke-PageScript -Expression '(()=>{
+        const root = document.querySelector("[data-ambu-playground-root]");
+        const sprite = root.querySelector("[data-ambu-sprite]");
+        const status = root.querySelector("[data-ambu-status-readout]");
+        const holdBtn = root.querySelector("[data-ambu-hold-toggle]");
+        
+        // Test hold toggle
+        holdBtn.click();
+        const heldClosed = sprite.src.includes("closedEyes");
+        const heldStatus = status.textContent;
+        
+        // Release hold
+        holdBtn.click();
+        const releasedOpen = sprite.src.includes("Ambu_2.png");
+        
+        // Test stage select to egg
+        const stageSelect = root.querySelector("[data-ambu-stage-select]");
+        stageSelect.value = "egg";
+        stageSelect.dispatchEvent(new Event("change"));
+        const eggSrc = sprite.src.includes("Ambu_1.png");
+        
+        // Return to baby
+        stageSelect.value = "baby";
+        stageSelect.dispatchEvent(new Event("change"));
+        const backToBaby = sprite.src.includes("Ambu_2.png");
+        
+        return { heldClosed, heldStatus, releasedOpen, eggSrc, backToBaby };
+    })()'
+
+    Assert-True $playgroundAmbu.heldClosed 'Playground: Mantener ojos cerrados cambia sprite a closedEyes'
+    Assert-True $playgroundAmbu.releasedOpen 'Playground: Liberar ojos restaura sprite a Ambu_2'
+    Assert-True $playgroundAmbu.eggSrc 'Playground: Selector de etapa cambia a visual de huevo'
+    Assert-True $playgroundAmbu.backToBaby 'Playground: Selector de etapa vuelve a Ambu bebe'
 
     $exceptions = @($script:browserEvents | Where-Object { $_.method -eq 'Runtime.exceptionThrown' })
     Assert-Equal $exceptions.Count 0 'sin excepciones de runtime'

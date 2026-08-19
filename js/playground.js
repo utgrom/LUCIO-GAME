@@ -732,6 +732,201 @@
     openingSequence.reset();
   });
 
+  // -------------------------------------------------------------
+  // Section 03: Ambu Bebé Visuals & Blinking Playground
+  // -------------------------------------------------------------
+  const ambuPlaygroundRoot = document.querySelector("[data-ambu-playground-root]");
+  let ambuPlayground = null;
+
+  if (ambuPlaygroundRoot && window.AmbuRenderer) {
+    const ambuHost = ambuPlaygroundRoot.querySelector("[data-ambu-stage-host]");
+    const ambuCharacter = ambuPlaygroundRoot.querySelector("[data-ambu-character]");
+    const ambuSprite = ambuPlaygroundRoot.querySelector("[data-ambu-sprite]");
+    const ambuBackdropLayer = ambuPlaygroundRoot.querySelector("[data-ambu-backdrop-layer]");
+    const ambuBackdropImg = ambuBackdropLayer?.querySelector("img");
+
+    const ambuLiveDot = ambuPlaygroundRoot.querySelector("[data-ambu-live-dot]");
+    const ambuStatusReadout = ambuPlaygroundRoot.querySelector("[data-ambu-status-readout]");
+    const ambuBlinkCounter = ambuPlaygroundRoot.querySelector("[data-ambu-blink-counter]");
+    const ambuLastType = ambuPlaygroundRoot.querySelector("[data-ambu-last-type]");
+    const ambuNextCountdown = ambuPlaygroundRoot.querySelector("[data-ambu-next-countdown]");
+    const ambuBreatheStatus = ambuPlaygroundRoot.querySelector("[data-ambu-breathe-status]");
+
+    const ambuStageSelect = ambuPlaygroundRoot.querySelector("[data-ambu-stage-select]");
+    const ambuBgSelect = ambuPlaygroundRoot.querySelector("[data-ambu-bg-select]");
+    const ambuBreatheToggle = ambuPlaygroundRoot.querySelector("[data-ambu-breathe-toggle]");
+    const ambuBreatheSpeed = ambuPlaygroundRoot.querySelector("[data-ambu-breathe-speed]");
+    const ambuBreatheVal = ambuPlaygroundRoot.querySelector("[data-ambu-breathe-val]");
+
+    const ambuAutoBlinkToggle = ambuPlaygroundRoot.querySelector("[data-ambu-auto-blink-toggle]");
+    const ambuCloseDuration = ambuPlaygroundRoot.querySelector("[data-ambu-close-duration]");
+    const ambuClosedVal = ambuPlaygroundRoot.querySelector("[data-ambu-closed-val]");
+    const ambuDoubleChance = ambuPlaygroundRoot.querySelector("[data-ambu-double-chance]");
+    const ambuDoubleVal = ambuPlaygroundRoot.querySelector("[data-ambu-double-val]");
+    const ambuFreqBase = ambuPlaygroundRoot.querySelector("[data-ambu-freq-base]");
+    const ambuFreqVal = ambuPlaygroundRoot.querySelector("[data-ambu-freq-val]");
+
+    const btnTriggerBlink = ambuPlaygroundRoot.querySelector("[data-ambu-trigger-blink]");
+    const btnTriggerDouble = ambuPlaygroundRoot.querySelector("[data-ambu-trigger-double]");
+    const btnHoldToggle = ambuPlaygroundRoot.querySelector("[data-ambu-hold-toggle]");
+    const btnTapAnim = ambuPlaygroundRoot.querySelector("[data-ambu-tap-anim]");
+    const btnBirthAnim = ambuPlaygroundRoot.querySelector("[data-ambu-birth-anim]");
+    const btnResetDefaults = ambuPlaygroundRoot.querySelector("[data-ambu-reset-defaults]");
+
+    ambuPlayground = new window.AmbuRenderer({
+      character: ambuCharacter,
+      sprite: ambuSprite,
+      backdropImg: ambuBackdropImg,
+      stageWrap: ambuHost,
+    }, {
+      stage: "baby",
+      breathingEnabled: true,
+      breathingDuration: 4.0,
+    });
+
+    ambuPlayground.on((event) => {
+      if (event.type === "eyes-closed") {
+        ambuStatusReadout.textContent = event.isDoubleBlinking ? "Doble parpadeo (Cerrado)" : "Ojos cerrados";
+        ambuLiveDot.classList.add("status-dot--blink");
+      } else if (event.type === "eyes-opened") {
+        ambuStatusReadout.textContent = event.isDoubleBlinking ? "Doble parpadeo (Pausa)" : "Ojos abiertos";
+        ambuLiveDot.classList.remove("status-dot--blink");
+      } else if (event.type === "blink-action-start") {
+        ambuBlinkCounter.textContent = String(event.blinkCount);
+        ambuLastType.textContent = event.isDouble ? "Doble" : "Simple";
+      } else if (event.type === "blink-action-end") {
+        ambuStatusReadout.textContent = "Ojos abiertos";
+        ambuLiveDot.classList.remove("status-dot--blink");
+      }
+    });
+
+    setInterval(() => {
+      const state = ambuPlayground.getState();
+      if (state.manualHoldClosed) {
+        ambuNextCountdown.textContent = "Pausado (Hold)";
+      } else if (!ambuPlayground.blinkConfig.enabled || state.stage !== "baby") {
+        ambuNextCountdown.textContent = "Desactivado";
+      } else if (state.isBlinking) {
+        ambuNextCountdown.textContent = "¡Parpadeando!";
+      } else {
+        const ms = state.nextBlinkDelayMs;
+        ambuNextCountdown.textContent = `${(ms / 1000).toFixed(1)}s`;
+      }
+    }, 100);
+
+    btnTriggerBlink?.addEventListener("click", () => ambuPlayground.triggerBlink(false));
+    btnTriggerDouble?.addEventListener("click", () => ambuPlayground.triggerDoubleBlink());
+    btnHoldToggle?.addEventListener("click", () => {
+      const current = ambuPlayground.getState().manualHoldClosed;
+      ambuPlayground.setManualHoldClosed(!current);
+      btnHoldToggle.classList.toggle("button--primary", !current);
+      showToast(!current ? "Ojos fijados en CERRADOS" : "Ojos liberados");
+    });
+    btnTapAnim?.addEventListener("click", () => ambuPlayground.triggerTap());
+    btnBirthAnim?.addEventListener("click", () => {
+      ambuStageSelect.value = "crack3";
+      ambuPlayground.setStage("crack3");
+      ambuPlayground.triggerBirth(() => {
+        ambuStageSelect.value = "baby";
+        showToast("¡Eclosión completada!");
+      });
+    });
+
+    ambuCharacter?.addEventListener("click", () => ambuPlayground.triggerTap());
+
+    ambuStageSelect?.addEventListener("change", () => {
+      ambuPlayground.setStage(ambuStageSelect.value);
+    });
+
+    ambuBgSelect?.addEventListener("change", () => {
+      const mode = ambuBgSelect.value;
+      ambuHost.dataset.bgMode = mode;
+      if (ambuBackdropLayer) {
+        ambuBackdropLayer.hidden = mode !== "tap-backdrop";
+      }
+    });
+
+    ambuBreatheToggle?.addEventListener("change", () => {
+      const enabled = ambuBreatheToggle.checked;
+      const speed = parseFloat(ambuBreatheSpeed.value) || 4.0;
+      ambuPlayground.setBreathing(enabled, speed);
+      ambuBreatheStatus.textContent = enabled ? `Activa (${speed.toFixed(1)}s)` : "Inactiva";
+    });
+
+    ambuBreatheSpeed?.addEventListener("input", () => {
+      const speed = parseFloat(ambuBreatheSpeed.value) || 4.0;
+      ambuBreatheVal.textContent = `${speed.toFixed(1)}s`;
+      ambuPlayground.setBreathing(ambuBreatheToggle.checked, speed);
+      ambuBreatheStatus.textContent = ambuBreatheToggle.checked ? `Activa (${speed.toFixed(1)}s)` : "Inactiva";
+    });
+
+    ambuAutoBlinkToggle?.addEventListener("change", () => {
+      if (ambuAutoBlinkToggle.checked) {
+        ambuPlayground.startBlinking();
+      } else {
+        ambuPlayground.stopBlinking();
+      }
+    });
+
+    ambuCloseDuration?.addEventListener("input", () => {
+      const max = parseInt(ambuCloseDuration.value, 10);
+      const min = Math.max(50, Math.round(max * 0.6));
+      ambuClosedVal.textContent = `${min} - ${max} ms`;
+      ambuPlayground.updateConfig({ closeDurationMin: min, closeDurationMax: max });
+    });
+
+    ambuDoubleChance?.addEventListener("input", () => {
+      const chance = parseInt(ambuDoubleChance.value, 10);
+      ambuDoubleVal.textContent = `${chance}%`;
+      ambuPlayground.updateConfig({ doubleBlinkChance: chance / 100 });
+    });
+
+    ambuFreqBase?.addEventListener("input", () => {
+      const base = parseFloat(ambuFreqBase.value);
+      const min = Math.max(0.8, base - 1.0);
+      const max = base + 1.0;
+      ambuFreqVal.textContent = `${min.toFixed(1)}s - ${max.toFixed(1)}s`;
+      ambuPlayground.updateConfig({
+        commonMin: min * 1000,
+        commonMax: max * 1000,
+        fastMin: Math.max(500, (min - 1.5) * 1000),
+        fastMax: min * 1000,
+        longMin: max * 1000,
+        longMax: (max + 3.5) * 1000,
+      });
+    });
+
+    btnResetDefaults?.addEventListener("click", () => {
+      ambuBreatheToggle.checked = true;
+      ambuBreatheSpeed.value = "4.0";
+      ambuBreatheVal.textContent = "4.0s";
+      ambuAutoBlinkToggle.checked = true;
+      ambuCloseDuration.value = "150";
+      ambuClosedVal.textContent = "80 - 150 ms";
+      ambuDoubleChance.value = "15";
+      ambuDoubleVal.textContent = "15%";
+      ambuFreqBase.value = "3.5";
+      ambuFreqVal.textContent = "2.5s - 4.5s";
+      ambuPlayground.updateConfig({
+        commonMin: 2500,
+        commonMax: 4500,
+        fastMin: 1000,
+        fastMax: 2500,
+        longMin: 4500,
+        longMax: 8000,
+        closeDurationMin: 80,
+        closeDurationMax: 150,
+        doubleBlinkChance: 0.15,
+        doubleBlinkPauseMin: 100,
+        doubleBlinkPauseMax: 250,
+      });
+      ambuPlayground.setBreathing(true, 4.0);
+      ambuPlayground.setStage("baby");
+      ambuStageSelect.value = "baby";
+      showToast("Valores de Ambu restablecidos a los valores por defecto");
+    });
+  }
+
   syncEffectInputs();
   renderLucioControls();
   renderShinyControls();
