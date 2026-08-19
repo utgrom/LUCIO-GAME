@@ -78,10 +78,15 @@
             <span data-ambu-instruction>Hay algo vivo entre las barras de Manteca...</span>
           </header>
 
-          <button class="ambu-character" type="button" data-ambu-character aria-label="Tocar el huevo misterioso">
-            <span class="ambu-character__aura" aria-hidden="true"></span>
-            <img data-ambu-sprite src="assets/invocados/Ambu_1.png" alt="Huevo misterioso" draggable="false">
-          </button>
+          <div class="ambu-character-wrap">
+            <button class="ambu-character" type="button" data-ambu-character aria-label="Tocar el huevo misterioso">
+              <span class="ambu-character__aura" aria-hidden="true"></span>
+              <img data-ambu-sprite src="assets/invocados/Ambu_1.png" alt="Huevo misterioso" draggable="false">
+            </button>
+            <button class="ambu-info-btn" type="button" data-open-ambu-info aria-label="Información sobre Ambu" hidden>
+              <img src="assets/UI/AmbuInfoButton.png" alt="Información" draggable="false">
+            </button>
+          </div>
 
           <div class="ambu-hatch-progress" data-ambu-progress hidden>
             <div><span>Cascarón</span><strong><b data-ambu-hits>0</b> / 15</strong></div>
@@ -98,10 +103,9 @@
             <small data-ambu-price-help></small>
           </section>
 
-          <section class="ambu-baby-card" data-ambu-baby-card hidden>
-            <span>NUEVO COMPAÑERO</span>
-            <strong>Ambu bebé se ha unido a ti</strong>
-            <p>Parece hambriento, curioso y cargado de una energía extraña.</p>
+          <section class="ambu-rate-card" data-ambu-rate-card hidden>
+            <span class="ambu-rate-card__badge">PRODUCCIÓN PASIVA</span>
+            <strong class="ambu-rate-card__value"><b data-ambu-rate-value>1</b> Tap /s</strong>
           </section>
         </div>
       </section>
@@ -179,6 +183,49 @@
       <button class="settings-row settings-row--danger" type="button" data-reset-progress><span><strong>Borrar progreso</strong><small>Requiere confirmación</small></span><b>⌫</b></button>
       <div class="settings-meta">Save v<span data-save-version>2</span> · Guardado local automático</div>
     </form>
+  </dialog>
+
+  <dialog class="game-dialog ambu-info-dialog" data-ambu-info-dialog aria-labelledby="ambu-info-title">
+    <div class="ambu-info-modal">
+      <header class="ambu-info-modal__header">
+        <div>
+          <span class="ambu-info-modal__kicker">COMPAÑERO</span>
+          <h2 id="ambu-info-title" data-ambu-info-name>Ambu bebé</h2>
+        </div>
+        <button class="icon-button ambu-info-modal__close" type="button" data-close-ambu-info aria-label="Cerrar">×</button>
+      </header>
+      <div class="ambu-info-modal__body">
+        <blockquote class="ambu-info-modal__lore" data-ambu-info-lore>
+          "Este hambriento bebé parece multiplicar la grasa de las mantecas que tiene a su alrededor. Es sospechosamente mágico..."
+        </blockquote>
+        <div class="ambu-info-modal__divider" aria-hidden="true"></div>
+        <ul class="ambu-info-modal__stats" data-ambu-info-stats>
+          <li>
+            <span class="ambu-info-modal__stat-icon" aria-hidden="true">⚡</span>
+            <span>Produce <strong>1 tap / s</strong> de forma pasiva</span>
+          </li>
+          <li>
+            <span class="ambu-info-modal__stat-icon" aria-hidden="true">⏳</span>
+            <span>Mientras está cerrado el juego, puede acumular el equivalente a <strong>3 horas</strong> de producción</span>
+          </li>
+        </ul>
+      </div>
+      <footer class="ambu-info-modal__footer">
+        <button class="game-button game-button--wide" type="button" data-close-ambu-info>Entendido</button>
+      </footer>
+    </div>
+  </dialog>
+
+  <dialog class="game-dialog ambu-birth-dialog" data-ambu-birth-dialog aria-labelledby="ambu-birth-title">
+    <div class="ambu-birth-modal">
+      <div class="ambu-birth-modal__visual">
+        <img src="assets/invocados/Ambu_2.png" alt="Ambu bebé" draggable="false">
+      </div>
+      <span class="ambu-birth-modal__kicker">NUEVO COMPAÑERO</span>
+      <h2 id="ambu-birth-title">Ambu bebé se ha unido a ti</h2>
+      <p class="ambu-birth-modal__desc">Parece hambriento, curioso y cargado de una energía extraña.</p>
+      <button class="game-button game-button--primary game-button--wide" type="button" data-close-ambu-birth>¡Hola, Ambu!</button>
+    </div>
   </dialog>
 
   <div class="game-toast" data-game-toast role="status" aria-live="polite"></div>

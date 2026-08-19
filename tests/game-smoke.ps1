@@ -229,9 +229,9 @@ try {
     Assert-True $ambuLocked.rateHidden 'UI de tasa pasiva oculta cuando bloqueado'
     Assert-True $ambuLocked.bankHidden 'UI de banco offline oculta cuando bloqueado'
 
-    # Discovery at 50,000 Mantecas
-    $ambuDiscovered = Invoke-PageScript -Expression '(()=>{const save=LucioSave.createDefault();save.mantecas=50000;GameState.importSnapshot(save);return {stage:GameState.getAmbu().stage,btnHidden:document.querySelector("[data-open-ambu]").hidden}})()'
-    Assert-Equal $ambuDiscovered.stage 'egg' 'alcanzar 50k mantecas descubre el huevo de Ambu'
+    # Discovery at 50,000 historical Mantecas earned (even if balance is 0 because of spent mantecas)
+    $ambuDiscovered = Invoke-PageScript -Expression '(()=>{const save=LucioSave.createDefault();save.mantecas=0;save.stats.totalMantecasEarned=50000;save.stats.totalMantecasSpent=50000;GameState.importSnapshot(save);return {stage:GameState.getAmbu().stage,btnHidden:document.querySelector("[data-open-ambu]").hidden}})()'
+    Assert-Equal $ambuDiscovered.stage 'egg' 'alcanzar 50k mantecas producidas historicamente descubre el huevo de Ambu'
     Assert-Equal $ambuDiscovered.btnHidden $false 'boton de Ambu visible tras descubrimiento'
 
     # Navigate to Ambu and purchase egg
@@ -252,8 +252,9 @@ try {
     Assert-True $hatchStart.purchaseHidden 'tarjeta de compra se oculta durante eclosion'
 
     # Perform 15 hatch taps and await birth
-    $hatchComplete = Invoke-PageScript -Expression 'new Promise(resolve => { const char = document.querySelector("[data-ambu-character]"); for(let i = 0; i < 15; i++) char.click(); setTimeout(() => resolve({ stage: GameState.getAmbu().stage, hatchedAt: GameState.getAmbu().hatchedAt > 0, lastActive: GameState.getAmbu().lastActiveTimestamp > 0, passive: GameState.getPassiveRate() }), 1600); })'
+    $hatchComplete = Invoke-PageScript -Expression 'new Promise(resolve => { const char = document.querySelector("[data-ambu-character]"); for(let i = 0; i < 15; i++) char.click(); setTimeout(() => { const birthOpen = document.querySelector("[data-ambu-birth-dialog]")?.hasAttribute("open"); document.querySelector("[data-close-ambu-birth]")?.click(); resolve({ stage: GameState.getAmbu().stage, hatchedAt: GameState.getAmbu().hatchedAt > 0, lastActive: GameState.getAmbu().lastActiveTimestamp > 0, passive: GameState.getPassiveRate(), birthOpen }); }, 1600); })'
     Assert-Equal $hatchComplete.stage 'baby' '15 taps eclosionan a Ambu bebe'
+    Assert-True $hatchComplete.birthOpen 'popup de bienvenida se abre al eclosionar Ambu bebe'
     Assert-True $hatchComplete.hatchedAt 'hatchedAt registrado'
     Assert-True $hatchComplete.lastActive 'lastActiveTimestamp inicializado'
     Assert-Equal $hatchComplete.passive.active $true 'produccion pasiva activa para bebe'
@@ -261,6 +262,15 @@ try {
     Assert-Equal $hatchComplete.passive.ratePerSecond 1 'tasa pasiva inicial es 1 manteca/s'
     Assert-Equal $hatchComplete.passive.offlineCapHours 3 'limite de banco offline es 3 horas'
     Assert-Equal $hatchComplete.passive.offlineCapacity 10800 'capacidad offline es 1*3*3600=10800'
+
+    # Check Ambu view for Baby Ambu (Rate card, Info button, and Info modal)
+    $babyAmbuView = Invoke-PageScript -Expression '(()=>{LucioGame.navigate("ambu",{focus:false});const infoBtnHidden=document.querySelector("[data-open-ambu-info]").hidden;const rateCardHidden=document.querySelector("[data-ambu-rate-card]").hidden;const rateText=document.querySelector("[data-ambu-rate-value]").textContent;document.querySelector("[data-open-ambu-info]").click();const infoModalOpen=document.querySelector("[data-ambu-info-dialog]").hasAttribute("open");const infoLore=document.querySelector("[data-ambu-info-lore]").textContent;document.querySelector("[data-close-ambu-info]").click();const infoModalClosed=!document.querySelector("[data-ambu-info-dialog]").hasAttribute("open");return {infoBtnHidden,rateCardHidden,rateText,infoModalOpen,hasLore:infoLore.includes("hambriento"),infoModalClosed};})()'
+    Assert-Equal $babyAmbuView.infoBtnHidden $false 'boton de informacion visible para Ambu bebe'
+    Assert-Equal $babyAmbuView.rateCardHidden $false 'caja de tasa pasiva visible en vista de Ambu bebe'
+    Assert-Equal $babyAmbuView.rateText '1' 'caja de tasa pasiva muestra 1 Tap /s'
+    Assert-True $babyAmbuView.infoModalOpen 'pulsar boton de info abre el popup modal'
+    Assert-True $babyAmbuView.hasLore 'popup modal contiene la descripcion exacta de Ambu bebe'
+    Assert-True $babyAmbuView.infoModalClosed 'cerrar popup modal oculta el dialogo'
 
     # Check Tap UI for Baby Ambu
     $babyTapUi = Invoke-PageScript -Expression '(()=>{LucioGame.navigate("tap",{focus:false});return {rateHidden:document.querySelector("[data-passive-rate]").hidden,rateText:document.querySelector("[data-passive-per-second]").textContent,bankHidden:document.querySelector("[data-offline-bank]").hidden,stored:document.querySelector("[data-offline-stored]").textContent,capacity:document.querySelector("[data-offline-capacity]").textContent,hours:document.querySelector("[data-offline-hours]").textContent,collectHidden:document.querySelector("[data-collect-offline]").hidden}})()'

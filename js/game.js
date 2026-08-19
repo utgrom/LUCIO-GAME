@@ -48,13 +48,19 @@
     ambuInstruction: document.querySelector("[data-ambu-instruction]"),
     ambuCharacter: document.querySelector("[data-ambu-character]"),
     ambuSprite: document.querySelector("[data-ambu-sprite]"),
+    openAmbuInfo: document.querySelector("[data-open-ambu-info]"),
     ambuProgress: document.querySelector("[data-ambu-progress]"),
     ambuHits: document.querySelector("[data-ambu-hits]"),
     ambuProgressFill: document.querySelector("[data-ambu-progress-fill]"),
     ambuPurchase: document.querySelector("[data-ambu-purchase]"),
     buyAmbu: document.querySelector("[data-buy-ambu]"),
     ambuPriceHelp: document.querySelector("[data-ambu-price-help]"),
-    ambuBabyCard: document.querySelector("[data-ambu-baby-card]"),
+    ambuRateCard: document.querySelector("[data-ambu-rate-card]"),
+    ambuRateValue: document.querySelector("[data-ambu-rate-value]"),
+    ambuInfoDialog: document.querySelector("[data-ambu-info-dialog]"),
+    closeAmbuInfo: document.querySelector("[data-close-ambu-info]"),
+    ambuBirthDialog: document.querySelector("[data-ambu-birth-dialog]"),
+    closeAmbuBirth: document.querySelector("[data-close-ambu-birth]"),
   };
 
   const numberFormatter = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 });
@@ -258,6 +264,11 @@
       elements.ambuCharacter.classList.add("is-arriving");
       window.clearTimeout(ambuArrivalTimer);
       ambuArrivalTimer = window.setTimeout(() => elements.ambuCharacter.classList.remove("is-arriving"), 760);
+      if (typeof elements.ambuBirthDialog?.showModal === "function") {
+        elements.ambuBirthDialog.showModal();
+      } else if (elements.ambuBirthDialog) {
+        elements.ambuBirthDialog.setAttribute("open", "");
+      }
       showToast("¡Ambu bebé ha nacido!", "discovery", 4800);
     }, config.ambu.hatchDelayMs);
   }
@@ -287,9 +298,13 @@
     elements.ambuStage.dataset.stage = ambu.stage;
     elements.ambuSprite.src = ambuSpriteFor(ambu);
     elements.ambuSprite.alt = isBaby ? "Ambu bebé" : "Huevo misterioso";
+    elements.openAmbuInfo.hidden = !isBaby;
     elements.ambuPurchase.hidden = !isEgg;
     elements.ambuProgress.hidden = !isHatching;
-    elements.ambuBabyCard.hidden = !isBaby;
+    elements.ambuRateCard.hidden = !isBaby;
+    if (isBaby) {
+      elements.ambuRateValue.textContent = formatNumber(state.getPassiveRate().ratePerSecond);
+    }
     elements.ambuHits.textContent = String(ambu.hatchTaps);
     elements.ambuProgressFill.style.width = `${Math.min(100, ambu.hatchTaps / maxHits * 100)}%`;
     elements.ambuCharacter.disabled = isBaby || (isHatching && ambu.hatchTaps >= maxHits);
@@ -469,6 +484,7 @@
   function preloadImages() {
     const paths = [
       config.assets.mystery,
+      ...(config.assets.ui ? Object.values(config.assets.ui) : []),
       ...Object.values(config.assets.effects),
       ...config.lucioOrder.map((material) => config.lucios[material].sprite),
       ...backpackOrder.flatMap((id) => [config.backpacks[id].closed, config.backpacks[id].open]),
@@ -531,6 +547,28 @@
   document.querySelectorAll("[data-go-shop]").forEach((button) => button.addEventListener("click", () => navigate("shop")));
   document.querySelectorAll("[data-go-tap]").forEach((button) => button.addEventListener("click", () => navigate("tap")));
   elements.openAmbu.addEventListener("click", () => navigate("ambu"));
+  elements.openAmbuInfo?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (typeof elements.ambuInfoDialog?.showModal === "function") elements.ambuInfoDialog.showModal();
+    else if (elements.ambuInfoDialog) elements.ambuInfoDialog.setAttribute("open", "");
+  });
+
+  elements.ambuInfoDialog?.addEventListener("click", (e) => {
+    const closeBtn = e.target.closest("[data-close-ambu-info]");
+    if (closeBtn || e.target === elements.ambuInfoDialog) {
+      if (typeof elements.ambuInfoDialog.close === "function") elements.ambuInfoDialog.close();
+      else elements.ambuInfoDialog.removeAttribute("open");
+    }
+  });
+
+  elements.ambuBirthDialog?.addEventListener("click", (e) => {
+    const closeBtn = e.target.closest("[data-close-ambu-birth]");
+    if (closeBtn || e.target === elements.ambuBirthDialog) {
+      if (typeof elements.ambuBirthDialog.close === "function") elements.ambuBirthDialog.close();
+      else elements.ambuBirthDialog.removeAttribute("open");
+    }
+  });
+
   elements.ambuCharacter.addEventListener("click", touchAmbu);
   elements.buyAmbu.addEventListener("click", buyAmbuEgg);
   elements.collectOffline?.addEventListener("click", collectOfflineMantecas);

@@ -178,22 +178,29 @@ button { color: inherit; }
   top: 14px;
   right: max(12px, env(safe-area-inset-right));
   display: flex;
-  width: 58px;
-  height: 46px;
+  min-width: 66px;
+  height: 52px;
   align-items: center;
   justify-content: center;
-  gap: 1px;
-  padding: 3px 4px 3px 9px;
-  border: 1px solid rgba(255, 193, 127, .28);
+  gap: 2px;
+  padding: 4px 6px 4px 10px;
+  border: 1px solid rgba(255, 193, 127, .38);
   border-radius: 999px;
   color: #ffe5c2;
-  background: rgba(19, 15, 12, .82);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, .28);
+  background: rgba(19, 15, 12, .88);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .32);
   cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
-.tap-subview-arrow > span { font-size: 1.35rem; line-height: 1; }
-.tap-subview-arrow img { width: 32px; height: 32px; object-fit: contain; }
+.tap-subview-arrow:hover {
+  transform: scale(1.05);
+  box-shadow: 0 14px 32px rgba(255, 126, 29, .22);
+}
+
+.tap-subview-arrow:active { transform: scale(0.96); }
+.tap-subview-arrow > span { font-size: 1.55rem; line-height: 1; }
+.tap-subview-arrow img { width: 38px; height: 38px; object-fit: contain; }
 
 .wallet-card {
   position: relative;
@@ -445,9 +452,49 @@ button { color: inherit; }
 .ambu-stage__header { position: relative; z-index: 3; }
 .ambu-stage__header p,
 .ambu-action-card > span,
-.ambu-baby-card > span { margin: 0 0 5px; color: var(--orange-2); font-size: .6rem; font-weight: 950; letter-spacing: .18em; }
+.ambu-stage__header p,
+.ambu-action-card > span { margin: 0 0 5px; color: var(--orange-2); font-size: .6rem; font-weight: 950; letter-spacing: .18em; }
 .ambu-stage__header h1 { margin: 0; font-size: clamp(1.65rem, 9vw, 3.1rem); letter-spacing: -.045em; line-height: 1; }
 .ambu-stage__header > span { display: block; max-width: 420px; margin: 8px auto 0; color: var(--muted); font-size: .74rem; line-height: 1.45; }
+
+.ambu-character-wrap {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+}
+
+.ambu-info-btn {
+  position: absolute;
+  right: 4%;
+  bottom: 6%;
+  z-index: 10;
+  display: grid;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid rgba(255, 193, 127, 0.45);
+  border-radius: 50%;
+  background: rgba(18, 14, 10, 0.9);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 16px rgba(255, 140, 40, 0.2);
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.ambu-info-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 24px rgba(255, 160, 60, 0.35);
+}
+
+.ambu-info-btn:active { transform: scale(0.94); }
+
+.ambu-info-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  pointer-events: none;
+}
 
 .ambu-character {
   position: relative;
@@ -512,7 +559,7 @@ button { color: inherit; }
 .ambu-hatch-progress__track i { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #ff8124, #ffd083); box-shadow: 0 0 14px rgba(255, 154, 65, .34); transition: width 240ms ease; }
 
 .ambu-action-card,
-.ambu-baby-card {
+.ambu-rate-card {
   display: grid;
   width: min(100%, 430px);
   gap: 5px;
@@ -524,13 +571,35 @@ button { color: inherit; }
 }
 
 .ambu-action-card h2 { margin: 0; font-size: 1.12rem; }
-.ambu-action-card p,
-.ambu-baby-card p { margin: 2px 0 9px; color: var(--muted); font-size: .7rem; line-height: 1.45; }
+.ambu-action-card p { margin: 2px 0 9px; color: var(--muted); font-size: .7rem; line-height: 1.45; }
 .ambu-action-card small { min-height: 1em; color: #be8d61; font-size: .61rem; }
-.ambu-baby-card { border-color: rgba(200, 255, 107, .15); background: rgba(20, 29, 18, .76); }
-.ambu-baby-card > span { color: var(--green); }
-.ambu-baby-card > strong { font-size: .95rem; }
-.ambu-baby-card p { margin-bottom: 0; }
+
+.ambu-rate-card {
+  gap: 4px;
+  padding: 16px 20px;
+  place-items: center;
+  border-color: rgba(200, 255, 107, .24);
+  color: #eaffc9;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(200, 255, 107, .12), transparent 70%),
+    rgba(18, 26, 16, .85);
+  text-align: center;
+}
+
+.ambu-rate-card__badge {
+  color: var(--green);
+  font-size: .62rem;
+  font-weight: 950;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+.ambu-rate-card__value {
+  color: #fff;
+  font-size: clamp(1.35rem, 6vw, 1.85rem);
+  font-weight: 900;
+  letter-spacing: -.03em;
+}
 
 @keyframes ambu-egg-tap {
   0%, 100% { transform: rotate(0deg) scale(1); }
@@ -804,18 +873,20 @@ button { color: inherit; }
 
 .opening-card .opening-stage { min-height: min(720px, calc(100dvh - 24px)); }
 
+.game-dialog,
 .settings-dialog {
-  width: min(92vw, 460px);
+  width: min(92vw, 480px);
   max-height: calc(100dvh - 28px);
   padding: 0;
   border: 1px solid var(--line-strong);
-  border-radius: 22px;
+  border-radius: 24px;
   color: var(--text);
   background: #101419;
-  box-shadow: 0 30px 100px rgba(0,0,0,.65);
+  box-shadow: 0 30px 100px rgba(0,0,0,.7);
 }
 
-.settings-dialog::backdrop { background: rgba(2,4,6,.74); backdrop-filter: blur(8px); }
+.game-dialog::backdrop,
+.settings-dialog::backdrop { background: rgba(2,4,6,.78); backdrop-filter: blur(10px); }
 
 .settings-panel { padding: 20px; }
 .settings-panel > header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
@@ -847,31 +918,158 @@ button { color: inherit; }
 .settings-row--danger { border-color: rgba(255,104,104,.18); color: #ffadad; }
 .settings-meta { margin-top: 18px; color: #5e6871; font-family: ui-monospace, monospace; font-size: .62rem; text-align: center; }
 
+/* Ambu Info Modal */
+.ambu-info-modal {
+  padding: 24px 22px 20px;
+}
+
+.ambu-info-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.ambu-info-modal__kicker {
+  display: block;
+  color: var(--orange-2);
+  font-size: 0.62rem;
+  font-weight: 950;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.ambu-info-modal__header h2 {
+  margin: 2px 0 0;
+  font-size: 1.65rem;
+  letter-spacing: -0.04em;
+}
+
+.ambu-info-modal__lore {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border-left: 3px solid var(--orange);
+  border-radius: 0 12px 12px 0;
+  background: rgba(255, 137, 31, 0.07);
+  color: #ffe6ce;
+  font-size: 0.84rem;
+  font-style: italic;
+  line-height: 1.55;
+}
+
+.ambu-info-modal__divider {
+  height: 1px;
+  margin: 14px 0;
+  background: var(--line);
+}
+
+.ambu-info-modal__stats {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+}
+
+.ambu-info-modal__stats li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.025);
+  color: #d6dde2;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.ambu-info-modal__stats li strong {
+  color: #fff;
+}
+
+.ambu-info-modal__stat-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+/* Ambu Birth Modal */
+.ambu-birth-modal {
+  display: grid;
+  gap: 12px;
+  padding: 28px 24px 22px;
+  justify-items: center;
+  text-align: center;
+}
+
+.ambu-birth-modal__visual {
+  display: grid;
+  width: 130px;
+  height: 130px;
+  place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(200, 255, 107, 0.22), transparent 70%);
+}
+
+.ambu-birth-modal__visual img {
+  width: 110px;
+  height: 110px;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.45));
+  animation: ambu-baby-arrive 720ms cubic-bezier(.2,.9,.25,1.2) both;
+}
+
+.ambu-birth-modal__kicker {
+  color: var(--green);
+  font-size: 0.68rem;
+  font-weight: 950;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.ambu-birth-modal h2 {
+  margin: 0;
+  font-size: 1.7rem;
+  letter-spacing: -0.04em;
+  line-height: 1.15;
+}
+
+.ambu-birth-modal__desc {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.5;
+  max-width: 320px;
+}
+
 .game-toast {
   position: fixed;
   z-index: 150;
   right: 16px;
-  bottom: calc(var(--nav-height) + 14px + env(safe-area-inset-bottom));
+  bottom: calc(var(--nav-height) + 16px + env(safe-area-inset-bottom));
   left: 16px;
-  max-width: 420px;
+  max-width: 540px;
   margin: 0 auto;
-  padding: 12px 14px;
-  border: 1px solid rgba(200,255,107,.25);
-  border-radius: 12px;
-  color: #eaffc9;
-  background: rgba(20,30,18,.96);
-  box-shadow: 0 16px 38px rgba(0,0,0,.4);
-  font-size: .76rem;
+  padding: 16px 22px;
+  border: 1px solid rgba(200,255,107,.35);
+  border-radius: 18px;
+  color: #f3ffe0;
+  background: rgba(18, 28, 16, .98);
+  box-shadow: 0 20px 48px rgba(0,0,0,.55), 0 0 25px rgba(200, 255, 107, .12);
+  font-size: 0.95rem;
+  font-weight: 750;
+  line-height: 1.45;
+  text-align: center;
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(12px);
   pointer-events: none;
-  transition: 180ms ease;
+  transition: 200ms ease;
 }
 
 .game-toast.is-visible { opacity: 1; transform: none; }
-.game-toast[data-tone="warning"] { border-color: rgba(255, 178, 95, .34); color: #ffe1ba; background: rgba(49, 30, 13, .96); }
-.game-toast[data-tone="error"] { border-color: rgba(255, 104, 104, .34); color: #ffd0d0; background: rgba(48, 17, 19, .96); }
-.game-toast[data-tone="discovery"] { border-color: rgba(255, 190, 121, .38); color: #fff0d8; background: rgba(48, 29, 15, .97); }
+.game-toast[data-tone="warning"] { border-color: rgba(255, 178, 95, .45); color: #fff1dc; background: rgba(49, 30, 13, .98); box-shadow: 0 20px 48px rgba(0,0,0,.55), 0 0 25px rgba(255, 178, 95, .15); }
+.game-toast[data-tone="error"] { border-color: rgba(255, 104, 104, .45); color: #ffe4e4; background: rgba(48, 17, 19, .98); box-shadow: 0 20px 48px rgba(0,0,0,.55), 0 0 25px rgba(255, 104, 104, .15); }
+.game-toast[data-tone="discovery"] { border-color: rgba(255, 190, 121, .55); color: #fff5e6; background: rgba(48, 29, 15, .98); box-shadow: 0 20px 48px rgba(0,0,0,.55), 0 0 30px rgba(255, 190, 121, .22); }
 
 @keyframes tap-ring-spin { to { transform: rotate(360deg); } }
 @keyframes tap-pop {
@@ -886,11 +1084,23 @@ button { color: inherit; }
   .game-header { padding-right: 28px; padding-left: 28px; }
   .view { padding: 34px 28px 48px; }
   .tap-view { grid-template-rows: auto minmax(300px, 1fr) auto; }
+  .tap-subview-arrow {
+    top: 18px;
+    right: 20px;
+    min-width: 86px;
+    height: 64px;
+    gap: 4px;
+    padding: 6px 10px 6px 14px;
+  }
+  .tap-subview-arrow > span { font-size: 1.95rem; }
+  .tap-subview-arrow img { width: 48px; height: 48px; }
   .ambu-view { padding-top: 30px; }
+  .ambu-info-btn { width: 56px; height: 56px; right: 6%; bottom: 6%; }
   .shop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .backpack-card:last-child { grid-column: 1 / -1; }
   .lucio-collection { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .opening-card .opening-stage { min-height: min(760px, calc(100dvh - 32px)); }
+  .game-toast { max-width: 640px; padding: 18px 28px; font-size: 1.08rem; }
 }
 
 @media (min-width: 1040px) {
@@ -913,6 +1123,16 @@ button { color: inherit; }
   .bottom-nav__item b { font-size: .67rem; }
   .bottom-nav__item i { top: 18px; }
   .tap-view { min-height: calc(100vh - 64px); }
+  .tap-subview-arrow {
+    top: 22px;
+    right: 28px;
+    min-width: 98px;
+    height: 72px;
+    gap: 6px;
+    padding: 8px 12px 8px 18px;
+  }
+  .tap-subview-arrow > span { font-size: 2.2rem; }
+  .tap-subview-arrow img { width: 54px; height: 54px; }
   .shop-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .backpack-card,
   .backpack-card:last-child { grid-column: auto; grid-template-columns: 1fr; }
@@ -938,7 +1158,8 @@ button { color: inherit; }
   .ambu-character { width: min(54vw, 29vh, 210px); }
   .ambu-stage[data-stage="baby"] .ambu-character { width: min(63vw, 35vh, 250px); }
   .ambu-action-card,
-  .ambu-baby-card { padding: 12px 14px; }
+  .ambu-rate-card { padding: 12px 14px; }
+  .ambu-action-card p { margin-bottom: 6px; }
   .ambu-action-card p { margin-bottom: 6px; }
 
   .opening-overlay { padding: 4px; }

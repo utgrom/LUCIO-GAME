@@ -282,7 +282,7 @@
         onlineSubTick -= gained;
         state.mantecas = safeAdd(state.mantecas, gained);
         state.stats.totalMantecasEarned = safeAdd(state.stats.totalMantecasEarned, gained);
-        scheduleSave();
+        if (!discoverAmbu()) scheduleSave();
         emit("ambu-online-produced", { gained });
       }
 
@@ -300,6 +300,7 @@
       state.stats.totalMantecasEarned = safeAdd(state.stats.totalMantecasEarned, stored);
       state.ambu.offlineStored = 0;
       state.ambu.lastActiveTimestamp = Date.now();
+      discoverAmbu({ emitEvent: true });
       const persisted = saveImmediately();
       emit("ambu-offline-collected", { collected: stored, persisted });
 
@@ -314,7 +315,7 @@
 
     function discoverAmbu(options) {
       const settings = Object.assign({ emitEvent: true }, options);
-      if (state.ambu.stage !== "locked" || state.mantecas < AMBU_DISCOVERY_THRESHOLD) return false;
+      if (state.ambu.stage !== "locked" || state.stats.totalMantecasEarned < AMBU_DISCOVERY_THRESHOLD) return false;
 
       state.ambu.stage = "egg";
       state.ambu.discoveredAt = Date.now();

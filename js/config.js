@@ -34,6 +34,9 @@
     },
     assets: {
       mystery: "assets/lucios/LucioMistery.png",
+      ui: {
+        ambuInfoButton: "assets/UI/AmbuInfoButton.png",
+      },
       effects: {
         sparkles: "assets/effects/Destello.png",
         diamond: "assets/effects/DiamondOverlay.png",
