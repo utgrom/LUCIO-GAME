@@ -276,19 +276,19 @@ try {
     # Natural Blinking Verification
     $blinkTest = Invoke-PageScript -Expression 'new Promise(resolve => {
         LucioGame.navigate("ambu",{focus:false});
-        const sprite = document.querySelector("[data-ambu-sprite]");
-        const backdrop = document.querySelector("[data-tap-ambu-backdrop] img");
+        const closedSprite = document.querySelector("[data-ambu-sprite-closed]");
+        const closedBackdrop = document.querySelector("[data-tap-ambu-backdrop-closed]");
         let sawClosedEyes = false;
         let sawBackdropClosed = false;
         let restoredOpenEyes = false;
         
         const checkInterval = setInterval(() => {
-            if (sprite && sprite.src.includes("closedEyes")) {
+            if (closedSprite && closedSprite.style.opacity === "1") {
                 sawClosedEyes = true;
-                if (backdrop && backdrop.src.includes("closedEyes")) {
+                if (closedBackdrop && closedBackdrop.style.opacity === "1") {
                     sawBackdropClosed = true;
                 }
-            } else if (sawClosedEyes && sprite && sprite.src.includes("Ambu_2.png")) {
+            } else if (sawClosedEyes && closedSprite && closedSprite.style.opacity === "0") {
                 restoredOpenEyes = true;
                 clearInterval(checkInterval);
                 resolve({ sawClosedEyes, sawBackdropClosed, restoredOpenEyes });
@@ -382,18 +382,19 @@ try {
 
     $playgroundAmbu = Invoke-PageScript -Expression '(()=>{
         const root = document.querySelector("[data-ambu-playground-root]");
+        const closedSprite = root.querySelector("[data-ambu-sprite-closed]");
         const sprite = root.querySelector("[data-ambu-sprite]");
         const status = root.querySelector("[data-ambu-status-readout]");
         const holdBtn = root.querySelector("[data-ambu-hold-toggle]");
         
         // Test hold toggle
         holdBtn.click();
-        const heldClosed = sprite.src.includes("closedEyes");
+        const heldClosed = closedSprite && closedSprite.style.opacity === "1";
         const heldStatus = status.textContent;
         
         // Release hold
         holdBtn.click();
-        const releasedOpen = sprite.src.includes("Ambu_2.png");
+        const releasedOpen = closedSprite && closedSprite.style.opacity === "0";
         
         // Test stage select to egg
         const stageSelect = root.querySelector("[data-ambu-stage-select]");

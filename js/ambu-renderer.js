@@ -115,6 +115,58 @@
       return randomRange(this.blinkConfig.longMin, this.blinkConfig.longMax);
     }
 
+    setupOverlays() {
+      if (this.elements.character && !this.elements.closedSprite) {
+        let closed = this.elements.character.querySelector("[data-ambu-sprite-closed]");
+        if (!closed) {
+          closed = document.createElement("img");
+          closed.dataset.ambuSpriteClosed = "";
+          closed.alt = "";
+          closed.draggable = false;
+          closed.style.position = "absolute";
+          closed.style.inset = "0";
+          closed.style.width = "100%";
+          closed.style.height = "100%";
+          closed.style.objectFit = "contain";
+          closed.style.pointerEvents = "none";
+          closed.style.opacity = "0";
+          closed.style.zIndex = "3";
+          closed.style.transition = "none";
+          this.elements.character.appendChild(closed);
+        }
+        closed.src = this.sprites.babyClosed;
+        this.elements.closedSprite = closed;
+      }
+
+      if (this.elements.backdropImg && !this.elements.backdropClosedImg) {
+        const parent = this.elements.backdropImg.parentElement;
+        if (parent) {
+          let backdropClosed = parent.querySelector("[data-tap-ambu-backdrop-closed]");
+          if (!backdropClosed) {
+            backdropClosed = document.createElement("img");
+            backdropClosed.dataset.tapAmbuBackdropClosed = "";
+            backdropClosed.alt = "";
+            backdropClosed.draggable = false;
+            backdropClosed.style.position = "absolute";
+            backdropClosed.style.inset = "0";
+            backdropClosed.style.width = "100%";
+            backdropClosed.style.height = "100%";
+            backdropClosed.style.objectFit = "contain";
+            backdropClosed.style.pointerEvents = "none";
+            backdropClosed.style.opacity = "0";
+            backdropClosed.style.zIndex = "2";
+            backdropClosed.style.transition = "none";
+            if (window.getComputedStyle(parent).position === "static") {
+              parent.style.position = "relative";
+            }
+            parent.appendChild(backdropClosed);
+          }
+          backdropClosed.src = this.sprites.babyClosed;
+          this.elements.backdropClosedImg = backdropClosed;
+        }
+      }
+    }
+
     setStage(stage) {
       this.stage = stage;
       if (this.elements.stageWrap) {
@@ -134,11 +186,7 @@
     }
 
     spriteForCurrentStage() {
-      if (this.stage === "baby") {
-        return (this.state.eyesClosed || this.state.manualHoldClosed)
-          ? this.sprites.babyClosed
-          : this.sprites.baby;
-      }
+      if (this.stage === "baby") return this.sprites.baby;
       if (this.stage === "crack3") return this.sprites.crack3;
       if (this.stage === "crack2") return this.sprites.crack2;
       if (this.stage === "crack1") return this.sprites.crack1;
@@ -146,15 +194,45 @@
     }
 
     updateSpriteImages() {
-      const src = this.spriteForCurrentStage();
+      this.setupOverlays();
+
+      const isClosed = (this.state.eyesClosed || this.state.manualHoldClosed) && this.stage === "baby";
+
       if (this.elements.sprite) {
-        this.elements.sprite.src = src;
+        const baseSrc = this.spriteForCurrentStage();
+        if (this.elements.sprite.getAttribute("src") !== baseSrc) {
+          this.elements.sprite.src = baseSrc;
+        }
         this.elements.sprite.alt = this.stage === "baby" ? "Ambu bebé" : "Huevo misterioso";
       }
+
+      if (this.elements.closedSprite) {
+        if (this.elements.closedSprite.getAttribute("src") !== this.sprites.babyClosed) {
+          this.elements.closedSprite.src = this.sprites.babyClosed;
+        }
+        const targetOpacity = (isClosed && this.stage === "baby") ? "1" : "0";
+        if (this.elements.closedSprite.style.opacity !== targetOpacity) {
+          this.elements.closedSprite.style.opacity = targetOpacity;
+        }
+        this.elements.closedSprite.style.display = (this.stage === "baby") ? "block" : "none";
+      }
+
       if (this.elements.backdropImg) {
-        this.elements.backdropImg.src = (this.stage === "baby" && (this.state.eyesClosed || this.state.manualHoldClosed))
-          ? this.sprites.babyClosed
-          : (this.stage === "baby" ? this.sprites.baby : this.sprites.egg);
+        const backdropSrc = this.stage === "baby" ? this.sprites.baby : this.sprites.egg;
+        if (this.elements.backdropImg.getAttribute("src") !== backdropSrc) {
+          this.elements.backdropImg.src = backdropSrc;
+        }
+      }
+
+      if (this.elements.backdropClosedImg) {
+        if (this.elements.backdropClosedImg.getAttribute("src") !== this.sprites.babyClosed) {
+          this.elements.backdropClosedImg.src = this.sprites.babyClosed;
+        }
+        const targetBackdropOpacity = (isClosed && this.stage === "baby") ? "1" : "0";
+        if (this.elements.backdropClosedImg.style.opacity !== targetBackdropOpacity) {
+          this.elements.backdropClosedImg.style.opacity = targetBackdropOpacity;
+        }
+        this.elements.backdropClosedImg.style.display = (this.stage === "baby") ? "block" : "none";
       }
     }
 
