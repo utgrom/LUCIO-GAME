@@ -546,6 +546,10 @@ button { color: inherit; }
 .ambu-character.is-arriving img { animation: ambu-baby-arrive 720ms cubic-bezier(.2,.9,.25,1.2) both; }
 .ambu-stage[data-stage="baby"] .ambu-character { width: min(76vw, 43vh, 430px); cursor: default; }
 .ambu-stage[data-stage="baby"] .ambu-character__aura { background: radial-gradient(circle, rgba(181, 255, 119, .16), transparent 68%); }
+.ambu-stage[data-stage="baby"] .ambu-character:not(.is-birthing):not(.is-arriving) img {
+  animation: ambu-baby-breathe 4s ease-in-out infinite;
+  transform-origin: 50% 82%;
+}
 
 .ambu-hatch-progress {
   display: grid;
@@ -596,9 +600,16 @@ button { color: inherit; }
 
 .ambu-rate-card__value {
   color: #fff;
-  font-size: clamp(1.35rem, 6vw, 1.85rem);
+  font-size: clamp(1.2rem, 5.5vw, 1.7rem);
   font-weight: 900;
   letter-spacing: -.03em;
+}
+
+.ambu-rate-card__value small {
+  color: var(--muted);
+  font-size: .82em;
+  font-weight: 750;
+  letter-spacing: normal;
 }
 
 @keyframes ambu-egg-tap {
@@ -993,53 +1004,13 @@ button { color: inherit; }
   line-height: 1;
 }
 
-/* Ambu Birth Modal */
-.ambu-birth-modal {
-  display: grid;
-  gap: 12px;
-  padding: 28px 24px 22px;
-  justify-items: center;
-  text-align: center;
-}
-
-.ambu-birth-modal__visual {
-  display: grid;
-  width: 130px;
-  height: 130px;
-  place-items: center;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(200, 255, 107, 0.22), transparent 70%);
-}
-
-.ambu-birth-modal__visual img {
-  width: 110px;
-  height: 110px;
-  object-fit: contain;
-  filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.45));
-  animation: ambu-baby-arrive 720ms cubic-bezier(.2,.9,.25,1.2) both;
-}
-
-.ambu-birth-modal__kicker {
-  color: var(--green);
-  font-size: 0.68rem;
-  font-weight: 950;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-}
-
-.ambu-birth-modal h2 {
-  margin: 0;
-  font-size: 1.7rem;
-  letter-spacing: -0.04em;
-  line-height: 1.15;
-}
-
-.ambu-birth-modal__desc {
-  margin: 0 0 10px;
-  color: var(--muted);
-  font-size: 0.86rem;
-  line-height: 1.5;
-  max-width: 320px;
+@keyframes ambu-baby-breathe {
+  0%, 100% {
+    transform: scale(1, 1);
+  }
+  50% {
+    transform: scale(0.985, 1.025) translateY(-2px);
+  }
 }
 
 .game-toast {
@@ -1188,6 +1159,7 @@ button { color: inherit; }
   .tap-zone__rings { animation: none; }
   .tap-pop { animation-duration: 1ms; }
   .ambu-character__aura { animation: none; }
+  .ambu-stage[data-stage="baby"] .ambu-character img { animation: none; }
   .ambu-character.is-tapped img,
   .ambu-character.is-birthing img,
   .ambu-character.is-arriving img { animation-duration: 1ms; }

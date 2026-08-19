@@ -30,6 +30,7 @@
         crack2: "assets/invocados/Ambu_1_2.png",
         crack3: "assets/invocados/Ambu_1_3.png",
         baby: "assets/invocados/Ambu_2.png",
+        babyClosed: "assets/invocados/Ambu_2_closedEyes.png",
       },
     },
     assets: {

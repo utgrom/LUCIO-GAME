@@ -59,8 +59,6 @@
     ambuRateValue: document.querySelector("[data-ambu-rate-value]"),
     ambuInfoDialog: document.querySelector("[data-ambu-info-dialog]"),
     closeAmbuInfo: document.querySelector("[data-close-ambu-info]"),
-    ambuBirthDialog: document.querySelector("[data-ambu-birth-dialog]"),
-    closeAmbuBirth: document.querySelector("[data-close-ambu-birth]"),
   };
 
   const numberFormatter = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 });
@@ -223,6 +221,10 @@
       elements.passivePerSecond.textContent = formatNumber(passive.ratePerSecond);
     }
 
+    if (elements.ambuRateValue) {
+      elements.ambuRateValue.textContent = formatNumber(passive.ratePerSecond);
+    }
+
     if (elements.offlineBank) {
       elements.offlineBank.hidden = !passive.active;
       if (elements.offlineStored) elements.offlineStored.textContent = formatNumber(ambu.offlineStored);
@@ -249,6 +251,88 @@
     return sprites.egg;
   }
 
+  let ambuBlinkTimer = 0;
+  let ambuBlinkSubTimer = 0;
+
+  function randomRange(min, max) {
+    return min + Math.random() * (max - min);
+  }
+
+  function getNextBlinkDelayMs() {
+    const roll = Math.random();
+    if (roll < 0.70) {
+      // 70% -> 2.5s a 4.5s
+      return randomRange(2500, 4500);
+    }
+    if (roll < 0.90) {
+      // 20% -> 1.0s a 2.5s
+      return randomRange(1000, 2500);
+    }
+    // 10% -> 4.5s a 8.0s
+    return randomRange(4500, 8000);
+  }
+
+  function stopAmbuBlinking() {
+    window.clearTimeout(ambuBlinkTimer);
+    window.clearTimeout(ambuBlinkSubTimer);
+    ambuBlinkTimer = 0;
+    ambuBlinkSubTimer = 0;
+    if (state.getAmbu().stage === "baby" && elements.ambuSprite) {
+      elements.ambuSprite.src = config.ambu.sprites.baby;
+    }
+  }
+
+  function scheduleNextBlink() {
+    window.clearTimeout(ambuBlinkTimer);
+    if (state.getAmbu().stage !== "baby") return;
+
+    const delay = getNextBlinkDelayMs();
+    ambuBlinkTimer = window.setTimeout(() => {
+      performBlink();
+    }, delay);
+  }
+
+  function performBlink() {
+    if (state.getAmbu().stage !== "baby" || elements.ambuCharacter.classList.contains("is-birthing") || elements.ambuCharacter.classList.contains("is-arriving")) {
+      scheduleNextBlink();
+      return;
+    }
+
+    const isDoubleBlink = Math.random() < 0.15;
+    const closeDuration = randomRange(80, 150);
+
+    elements.ambuSprite.src = config.ambu.sprites.babyClosed;
+
+    ambuBlinkSubTimer = window.setTimeout(() => {
+      if (state.getAmbu().stage !== "baby") return;
+      elements.ambuSprite.src = config.ambu.sprites.baby;
+
+      if (isDoubleBlink) {
+        const pauseBetween = randomRange(100, 250);
+        ambuBlinkSubTimer = window.setTimeout(() => {
+          if (state.getAmbu().stage !== "baby") return;
+          elements.ambuSprite.src = config.ambu.sprites.babyClosed;
+          const secondCloseDuration = randomRange(80, 150);
+
+          ambuBlinkSubTimer = window.setTimeout(() => {
+            if (state.getAmbu().stage !== "baby") return;
+            elements.ambuSprite.src = config.ambu.sprites.baby;
+            scheduleNextBlink();
+          }, secondCloseDuration);
+        }, pauseBetween);
+      } else {
+        scheduleNextBlink();
+      }
+    }, closeDuration);
+  }
+
+  function startAmbuBlinking() {
+    if (state.getAmbu().stage !== "baby") return;
+    if (!ambuBlinkTimer) {
+      scheduleNextBlink();
+    }
+  }
+
   function scheduleAmbuBirth() {
     if (ambuBirthTimer || state.getAmbu().stage !== "hatching") return;
     elements.ambuCharacter.classList.remove("is-tapped");
@@ -264,12 +348,7 @@
       elements.ambuCharacter.classList.add("is-arriving");
       window.clearTimeout(ambuArrivalTimer);
       ambuArrivalTimer = window.setTimeout(() => elements.ambuCharacter.classList.remove("is-arriving"), 760);
-      if (typeof elements.ambuBirthDialog?.showModal === "function") {
-        elements.ambuBirthDialog.showModal();
-      } else if (elements.ambuBirthDialog) {
-        elements.ambuBirthDialog.setAttribute("open", "");
-      }
-      showToast("¡Ambu bebé ha nacido!", "discovery", 4800);
+      showToast("NUEVO COMPAÑERO: Ambu bebé se ha unido a ti. Parece hambriento, curioso y cargado de una energía extraña.", "discovery", 7000);
     }, config.ambu.hatchDelayMs);
   }
 
@@ -291,6 +370,7 @@
       if (activeView === "ambu") navigate("tap", { focus: false });
       window.clearTimeout(ambuBirthTimer);
       ambuBirthTimer = 0;
+      stopAmbuBlinking();
       elements.ambuCharacter.classList.remove("is-tapped", "is-birthing", "is-arriving");
       return;
     }
@@ -304,6 +384,9 @@
     elements.ambuRateCard.hidden = !isBaby;
     if (isBaby) {
       elements.ambuRateValue.textContent = formatNumber(state.getPassiveRate().ratePerSecond);
+      startAmbuBlinking();
+    } else {
+      stopAmbuBlinking();
     }
     elements.ambuHits.textContent = String(ambu.hatchTaps);
     elements.ambuProgressFill.style.width = `${Math.min(100, ambu.hatchTaps / maxHits * 100)}%`;
@@ -561,14 +644,6 @@
     }
   });
 
-  elements.ambuBirthDialog?.addEventListener("click", (e) => {
-    const closeBtn = e.target.closest("[data-close-ambu-birth]");
-    if (closeBtn || e.target === elements.ambuBirthDialog) {
-      if (typeof elements.ambuBirthDialog.close === "function") elements.ambuBirthDialog.close();
-      else elements.ambuBirthDialog.removeAttribute("open");
-    }
-  });
-
   elements.ambuCharacter.addEventListener("click", touchAmbu);
   elements.buyAmbu.addEventListener("click", buyAmbuEgg);
   elements.collectOffline?.addEventListener("click", collectOfflineMantecas);
@@ -632,9 +707,11 @@
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
       state.flush();
+      stopAmbuBlinking();
     } else {
       lastFrameTime = performance.now();
       state.resolveOfflineCatchup(Date.now());
+      if (state.getAmbu().stage === "baby") startAmbuBlinking();
     }
   });
   window.addEventListener("focus", () => {
