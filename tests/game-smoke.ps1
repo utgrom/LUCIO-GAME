@@ -273,6 +273,37 @@ try {
     Assert-True $babyAmbuView.infoModalClosed 'cerrar popup modal oculta el dialogo'
     Assert-Equal $babyAmbuView.closedEyesSrc 'assets/invocados/Ambu_2_closedEyes.png' 'sprite de ojos cerrados configurado'
 
+    # Natural Blinking Verification
+    $blinkTest = Invoke-PageScript -Expression 'new Promise(resolve => {
+        LucioGame.navigate("ambu",{focus:false});
+        const sprite = document.querySelector("[data-ambu-sprite]");
+        const backdrop = document.querySelector("[data-tap-ambu-backdrop] img");
+        let sawClosedEyes = false;
+        let sawBackdropClosed = false;
+        let restoredOpenEyes = false;
+        
+        const checkInterval = setInterval(() => {
+            if (sprite && sprite.src.includes("closedEyes")) {
+                sawClosedEyes = true;
+                if (backdrop && backdrop.src.includes("closedEyes")) {
+                    sawBackdropClosed = true;
+                }
+            } else if (sawClosedEyes && sprite && sprite.src.includes("Ambu_2.png")) {
+                restoredOpenEyes = true;
+                clearInterval(checkInterval);
+                resolve({ sawClosedEyes, sawBackdropClosed, restoredOpenEyes });
+            }
+        }, 20);
+        
+        setTimeout(() => {
+            clearInterval(checkInterval);
+            resolve({ sawClosedEyes, sawBackdropClosed, restoredOpenEyes });
+        }, 6000);
+    })'
+    Assert-True $blinkTest.sawClosedEyes 'Ambu cierra los ojos durante el ciclo de parpadeo'
+    Assert-True $blinkTest.sawBackdropClosed 'Ambu en fondo de Tap tambien cierra los ojos al parpadear'
+    Assert-True $blinkTest.restoredOpenEyes 'Ambu abre los ojos tras parpadear'
+
     # Check Tap UI for Baby Ambu
     $babyTapUi = Invoke-PageScript -Expression '(()=>{LucioGame.navigate("tap",{focus:false});return {rateHidden:document.querySelector("[data-passive-rate]").hidden,rateText:document.querySelector("[data-passive-per-second]").textContent,bankHidden:document.querySelector("[data-offline-bank]").hidden,stored:document.querySelector("[data-offline-stored]").textContent,capacity:document.querySelector("[data-offline-capacity]").textContent,hours:document.querySelector("[data-offline-hours]").textContent,collectHidden:document.querySelector("[data-collect-offline]").hidden}})()'
     Assert-Equal $babyTapUi.rateHidden $false 'tasa pasiva visible en Tap para Ambu bebe'
@@ -293,8 +324,8 @@ try {
     Assert-Equal $rateUpdate.ambuRateText '10' 'UI de Ambu rate card actualiza a 10 🧈/s'
 
     # Online tick accumulation
-    $onlineTick = Invoke-PageScript -Expression '(()=>{const now=Date.now();GameState.tickOnline(1000,now);return {mantecas:GameState.getMantecas(),stored:GameState.getAmbu().offlineStored}})()'
-    Assert-Equal $onlineTick.mantecas 10 'tick online de 1000ms acumula 10 mantecas directamente a saldo'
+    $onlineTick = Invoke-PageScript -Expression '(()=>{const now=Date.now();const before=GameState.getMantecas();GameState.tickOnline(1000,now);return {gained:GameState.getMantecas()-before,stored:GameState.getAmbu().offlineStored}})()'
+    Assert-Equal $onlineTick.gained 10 'tick online de 1000ms acumula 10 mantecas directamente a saldo'
     Assert-Equal $onlineTick.stored 0 'tick online no altera banco offline'
 
     # Offline catchup accumulation (1 hour = 3600s * 10 🧈/s = 36,000)
