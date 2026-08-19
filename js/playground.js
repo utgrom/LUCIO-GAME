@@ -868,13 +868,6 @@
       }
     });
 
-    ambuCloseDuration?.addEventListener("input", () => {
-      const max = parseInt(ambuCloseDuration.value, 10);
-      const min = Math.max(50, Math.round(max * 0.6));
-      ambuClosedVal.textContent = `${min} - ${max} ms`;
-      ambuPlayground.updateConfig({ closeDurationMin: min, closeDurationMax: max });
-    });
-
     ambuDoubleChance?.addEventListener("input", () => {
       const chance = parseInt(ambuDoubleChance.value, 10);
       ambuDoubleVal.textContent = `${chance}%`;
@@ -901,8 +894,6 @@
       ambuBreatheSpeed.value = "4.0";
       ambuBreatheVal.textContent = "4.0s";
       ambuAutoBlinkToggle.checked = true;
-      ambuCloseDuration.value = "150";
-      ambuClosedVal.textContent = "80 - 150 ms";
       ambuDoubleChance.value = "15";
       ambuDoubleVal.textContent = "15%";
       ambuFreqBase.value = "3.5";
@@ -914,8 +905,7 @@
         fastMax: 2500,
         longMin: 4500,
         longMax: 8000,
-        closeDurationMin: 80,
-        closeDurationMax: 150,
+        closeDuration: 160,
         doubleBlinkChance: 0.15,
         doubleBlinkPauseMin: 100,
         doubleBlinkPauseMax: 250,

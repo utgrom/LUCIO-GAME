@@ -15,8 +15,7 @@
     fastMax: 2500,
     longMin: 4500,
     longMax: 8000,
-    closeDurationMin: 80,
-    closeDurationMax: 150,
+    closeDuration: 160,
     doubleBlinkChance: 0.15,
     doubleBlinkPauseMin: 100,
     doubleBlinkPauseMax: 250,
@@ -316,7 +315,7 @@
         ? forcedDouble
         : (Math.random() < this.blinkConfig.doubleBlinkChance);
 
-      const closeDuration = randomRange(this.blinkConfig.closeDurationMin, this.blinkConfig.closeDurationMax);
+      const closeDuration = this.blinkConfig.closeDuration || 160;
 
       this.state.isBlinking = true;
       this.state.isDoubleBlinking = isDouble;
@@ -340,7 +339,6 @@
             if (this.stage !== "baby") return;
 
             this.setEyesClosed(true);
-            const secondCloseDuration = randomRange(this.blinkConfig.closeDurationMin, this.blinkConfig.closeDurationMax);
 
             this.timers.sub = window.setTimeout(() => {
               this.timers.sub = null;
@@ -351,7 +349,7 @@
               this.state.isDoubleBlinking = false;
               this.emit("blink-action-end", { double: true });
               if (this.blinkConfig.enabled) this.scheduleNextBlink();
-            }, secondCloseDuration);
+            }, closeDuration);
           }, pauseBetween);
         } else {
           this.state.isBlinking = false;
