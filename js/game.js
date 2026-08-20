@@ -13,7 +13,10 @@
   const elements = {
     views: Array.from(document.querySelectorAll("[data-view]")),
     navItems: Array.from(document.querySelectorAll("[data-nav]")),
+    walletCard: document.querySelector("[data-wallet-card]"),
     mantecas: document.querySelector("[data-mantecas]"),
+    mantecasUnit: document.querySelector("[data-mantecas-unit]"),
+    mantecasIcon: document.querySelector("[data-mantecas-icon]"),
     headerMantecas: document.querySelector("[data-header-mantecas]"),
     tapValue: document.querySelector("[data-tap-value]"),
     totalLucios: document.querySelector("[data-total-lucios]"),
@@ -41,7 +44,16 @@
     offlineCapacity: document.querySelector("[data-offline-capacity]"),
     offlineProgress: document.querySelector("[data-offline-progress]"),
     offlineHours: document.querySelector("[data-offline-hours]"),
+    ambuWallet: document.querySelector("[data-ambu-wallet]"),
     ambuMantecas: document.querySelector("[data-ambu-mantecas]"),
+    ambuMantecasUnit: document.querySelector("[data-ambu-mantecas-unit]"),
+    ambuMantecasIcon: document.querySelector("[data-ambu-mantecas-icon]"),
+    ambuEvolutionBar: document.querySelector("[data-ambu-evolution-bar]"),
+    openEvolutionModal: document.querySelector("[data-open-evolution-modal]"),
+    ambuEvolutionDialog: document.querySelector("[data-ambu-evolution-dialog]"),
+    closeEvolutionModal: document.querySelector("[data-close-evolution-modal]"),
+    buyEvolution: document.querySelector("[data-buy-evolution]"),
+    evolutionPriceHelp: document.querySelector("[data-evolution-price-help]"),
     ambuStage: document.querySelector("[data-ambu-stage]"),
     ambuKicker: document.querySelector("[data-ambu-kicker]"),
     ambuName: document.querySelector("[data-ambu-name]"),
@@ -59,6 +71,9 @@
     ambuRateValue: document.querySelector("[data-ambu-rate-value]"),
     ambuInfoDialog: document.querySelector("[data-ambu-info-dialog]"),
     closeAmbuInfo: document.querySelector("[data-close-ambu-info]"),
+    ambuInfoName: document.querySelector("[data-ambu-info-name]"),
+    ambuInfoLore: document.querySelector("[data-ambu-info-lore]"),
+    ambuInfoStats: document.querySelector("[data-ambu-info-stats]"),
   };
 
   const numberFormatter = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 });
@@ -209,12 +224,37 @@
     const passive = state.getPassiveRate();
     const ambu = snapshot.ambu;
 
-    elements.mantecas.textContent = formatNumber(snapshot.mantecas);
-    elements.headerMantecas.textContent = formatNumber(snapshot.mantecas);
-    elements.ambuMantecas.textContent = formatNumber(snapshot.mantecas);
-    elements.tapValue.textContent = formatNumber(tapValue);
-    elements.totalLucios.textContent = formatNumber(totalCopies(snapshot.counts));
-    elements.totalBackpacks.textContent = formatNumber(snapshot.stats.backpacksOpened);
+    const displayMantecas = config.formatters.formatMantecasDisplay(snapshot.mantecas);
+
+    if (elements.mantecas) {
+      elements.mantecas.textContent = displayMantecas.amountText;
+    }
+    if (elements.mantecasUnit) {
+      elements.mantecasUnit.hidden = !displayMantecas.isScaled;
+      elements.mantecasUnit.textContent = displayMantecas.unitSubtitle;
+    }
+    if (elements.mantecasIcon) {
+      elements.mantecasIcon.hidden = displayMantecas.isScaled;
+    }
+
+    if (elements.headerMantecas) {
+      elements.headerMantecas.textContent = displayMantecas.amountText;
+    }
+
+    if (elements.ambuMantecas) {
+      elements.ambuMantecas.textContent = displayMantecas.amountText;
+    }
+    if (elements.ambuMantecasUnit) {
+      elements.ambuMantecasUnit.hidden = !displayMantecas.isScaled;
+      elements.ambuMantecasUnit.textContent = displayMantecas.unitSubtitle;
+    }
+    if (elements.ambuMantecasIcon) {
+      elements.ambuMantecasIcon.hidden = displayMantecas.isScaled;
+    }
+
+    if (elements.tapValue) elements.tapValue.textContent = formatNumber(tapValue);
+    if (elements.totalLucios) elements.totalLucios.textContent = formatNumber(totalCopies(snapshot.counts));
+    if (elements.totalBackpacks) elements.totalBackpacks.textContent = formatNumber(snapshot.stats.backpacksOpened);
 
     if (elements.passiveRate && elements.passivePerSecond) {
       elements.passiveRate.hidden = !passive.active;
@@ -240,6 +280,26 @@
     }
 
     updateShopAffordability();
+    updateEvolutionAffordability();
+  }
+
+  function updateEvolutionAffordability() {
+    if (!elements.buyEvolution) return;
+    const ambu = state.getAmbu();
+    if (ambu.stage !== "baby") return;
+
+    const evolutionPrice = config.ambu?.stages?.child?.evolutionPrice || 10000000;
+    const mantecas = state.getMantecas();
+    const canBuyEvolution = mantecas >= evolutionPrice;
+
+    elements.buyEvolution.disabled = !canBuyEvolution;
+    elements.buyEvolution.textContent = `Evolucionar · ${formatNumber(evolutionPrice)} 🧈`;
+
+    if (elements.evolutionPriceHelp) {
+      elements.evolutionPriceHelp.textContent = canBuyEvolution
+        ? "Tienes suficientes Mantecas para evolucionarlo."
+        : `Faltan ${formatNumber(evolutionPrice - mantecas)} Mantecas.`;
+    }
   }
 
   const ambuRenderer = new window.AmbuRenderer({
@@ -272,20 +332,36 @@
     const isEgg = ambu.stage === "egg";
     const isHatching = ambu.stage === "hatching";
     const isBaby = ambu.stage === "baby";
+    const isChild = ambu.stage === "child";
+    const isSummoned = isBaby || isChild;
     const maxHits = config.ambu.hatchTaps;
     const canBuy = state.canPurchaseAmbuEgg();
 
     elements.openAmbu.hidden = !unlocked;
-    elements.tapAmbuBackdrop.hidden = !isBaby;
-    elements.openAmbu.querySelector("img").src = isBaby ? config.ambu.sprites.baby : config.ambu.sprites.egg;
-    elements.openAmbu.setAttribute("aria-label", isBaby ? "Visitar a Ambu bebé" : "Visitar el huevo misterioso");
+    elements.tapAmbuBackdrop.hidden = !isSummoned;
+
+    let visitSprite = config.ambu.sprites.egg;
+    let visitLabel = "Visitar el huevo misterioso";
+    if (isChild) {
+      visitSprite = config.ambu.sprites.child;
+      visitLabel = "Visitar a Ambu niño";
+    } else if (isBaby) {
+      visitSprite = config.ambu.sprites.baby;
+      visitLabel = "Visitar a Ambu bebé";
+    }
+    elements.openAmbu.querySelector("img").src = visitSprite;
+    elements.openAmbu.setAttribute("aria-label", visitLabel);
+
+    if (elements.tapAmbuBackdrop?.querySelector("img")) {
+      elements.tapAmbuBackdrop.querySelector("img").src = isChild ? config.ambu.sprites.child : (isBaby ? config.ambu.sprites.baby : config.ambu.sprites.egg);
+    }
 
     if (!unlocked) {
       if (activeView === "ambu") navigate("tap", { focus: false });
       window.clearTimeout(ambuBirthTimer);
       ambuBirthTimer = 0;
       ambuRenderer.setStage("locked");
-      elements.ambuCharacter.classList.remove("is-tapped", "is-birthing", "is-arriving");
+      elements.ambuCharacter.classList.remove("is-tapped", "is-birthing", "is-arriving", "is-evolving");
       return;
     }
 
@@ -299,16 +375,27 @@
 
     ambuRenderer.setStage(calculatedStage);
 
-    elements.openAmbuInfo.hidden = !isBaby;
+    elements.openAmbuInfo.hidden = !isSummoned;
     elements.ambuPurchase.hidden = !isEgg;
     elements.ambuProgress.hidden = !isHatching;
-    elements.ambuRateCard.hidden = !isBaby;
-    if (isBaby) {
-      elements.ambuRateValue.textContent = formatNumber(state.getPassiveRate().ratePerSecond);
+    elements.ambuRateCard.hidden = !isSummoned;
+    if (elements.ambuEvolutionBar) {
+      elements.ambuEvolutionBar.hidden = !isBaby;
     }
+
+    const passive = state.getPassiveRate();
+    if (isSummoned && elements.ambuRateCard) {
+      const pulseRateText = isChild ? "1 Tap / 0,9s" : "1 Tap / s";
+      const valueElem = elements.ambuRateCard.querySelector(".ambu-rate-card__value");
+      if (valueElem) {
+        valueElem.innerHTML = `${pulseRateText} <small>(<b data-ambu-rate-value>${formatNumber(passive.ratePerSecond)}</b> 🧈/s)</small>`;
+        elements.ambuRateValue = valueElem.querySelector("[data-ambu-rate-value]");
+      }
+    }
+
     elements.ambuHits.textContent = String(ambu.hatchTaps);
     elements.ambuProgressFill.style.width = `${Math.min(100, ambu.hatchTaps / maxHits * 100)}%`;
-    elements.ambuCharacter.disabled = isBaby || (isHatching && ambu.hatchTaps >= maxHits);
+    elements.ambuCharacter.disabled = isSummoned || (isHatching && ambu.hatchTaps >= maxHits);
 
     if (isEgg) {
       elements.ambuKicker.textContent = "HALLAZGO MISTERIOSO";
@@ -327,12 +414,35 @@
         ? "El huevo está a punto de abrirse..."
         : `Toca el huevo · faltan ${maxHits - ambu.hatchTaps} golpes`;
       elements.ambuCharacter.setAttribute("aria-label", `Golpear el cascarón; ${ambu.hatchTaps} de ${maxHits}`);
+    } else if (isChild) {
+      elements.ambuKicker.textContent = "COMPAÑERO INVOCADO";
+      elements.ambuName.textContent = "AMBU NIÑO";
+      elements.ambuInstruction.textContent = "Ha crecido y tiene una curiosidad arrolladora";
+      elements.ambuCharacter.setAttribute("aria-label", "Ambu niño");
     } else {
       elements.ambuKicker.textContent = "COMPAÑERO INVOCADO";
       elements.ambuName.textContent = "AMBU BEBÉ";
       elements.ambuInstruction.textContent = "Una criatura extraña y poderosa ha despertado.";
       elements.ambuCharacter.setAttribute("aria-label", "Ambu bebé");
     }
+
+    if (elements.ambuInfoName) {
+      elements.ambuInfoName.textContent = isChild ? "Ambu niño" : "Ambu bebé";
+    }
+    if (elements.ambuInfoLore) {
+      elements.ambuInfoLore.textContent = isChild
+        ? '"Con una dieta basada en grasas, Ambu ha duplicado su tamaño. Su consciencia se desarrolla y sus sentidos se agudizan, despertando cierta curiosidad por los lucios..."'
+        : '"Este hambriento bebé parece multiplicar la grasa de las mantecas que tiene a su alrededor. Es sospechosamente mágico..."';
+    }
+    if (elements.ambuInfoStats) {
+      elements.ambuInfoStats.innerHTML = isChild
+        ? `<li><span class="ambu-info-modal__stat-icon" aria-hidden="true">⚡</span><span>Produce <strong>1 tap cada 0,9s</strong> de forma pasiva</span></li>
+           <li><span class="ambu-info-modal__stat-icon" aria-hidden="true">⏳</span><span>Mientras está cerrado el juego, puede acumular el equivalente a <strong>6 horas</strong> de producción</span></li>`
+        : `<li><span class="ambu-info-modal__stat-icon" aria-hidden="true">⚡</span><span>Produce <strong>1 tap / s</strong> de forma pasiva</span></li>
+           <li><span class="ambu-info-modal__stat-icon" aria-hidden="true">⏳</span><span>Mientras está cerrado el juego, puede acumular el equivalente a <strong>3 horas</strong> de producción</span></li>`;
+    }
+
+    updateEvolutionAffordability();
 
     if (isHatching && ambu.hatchTaps >= maxHits) scheduleAmbuBirth();
     else {
@@ -355,7 +465,7 @@
 
   function touchAmbu() {
     const ambu = state.getAmbu();
-    if (ambu.stage === "baby" || ambu.hatchTaps >= config.ambu.hatchTaps) return;
+    if (ambu.stage === "baby" || ambu.stage === "child" || ambu.hatchTaps >= config.ambu.hatchTaps) return;
     animateAmbuTap();
     const result = state.tapAmbuEgg();
     if (!result.ok && result.reason === "payment-required") {
@@ -373,6 +483,35 @@
     }
     showToast("El huevo responde. ¡Rompe el cascarón!", "discovery", 3800);
     elements.ambuCharacter.focus({ preventScroll: true });
+  }
+
+  function buyAmbuEvolution() {
+    const result = state.purchaseAmbuEvolution();
+    if (!result.ok) {
+      if (result.reason === "insufficient-mantecas") {
+        showToast(`Te faltan ${formatNumber(result.missing)} 🧈 para evolucionar a Ambu.`, "warning");
+      }
+      return;
+    }
+
+    if (typeof elements.ambuEvolutionDialog?.close === "function") {
+      elements.ambuEvolutionDialog.close();
+    } else {
+      elements.ambuEvolutionDialog?.removeAttribute("open");
+    }
+
+    showToast("Ambu ha crecido y ahora es Ambu Niño.", "discovery", 6000);
+
+    ambuRenderer.triggerEvolution(() => {
+      renderAmbu();
+      renderEconomy();
+    });
+  }
+
+  function showExactMantecasToast() {
+    const amount = state.getMantecas();
+    const formatted = config.formatters.formatNumberExact(amount);
+    showToast(`Cantidad exacta de mantecas: ${formatted} 🧈`, "success", 3600);
   }
 
   function renderCollection() {
@@ -449,22 +588,20 @@
     purchasedReward = null;
     renderCollection();
     renderEconomy();
-    const fallbackFocus = elements.navItems.find((item) => item.dataset.nav === activeView)
-      || elements.navItems[0];
-    const focusTarget = openingReturnFocus && !openingReturnFocus.disabled
-      ? openingReturnFocus
-      : fallbackFocus;
+    if (openingReturnFocus && typeof openingReturnFocus.focus === "function") {
+      openingReturnFocus.focus({ preventScroll: true });
+    }
     openingReturnFocus = null;
-    focusTarget?.focus({ preventScroll: true });
   }
 
   function trapOpeningFocus(event) {
     if (event.key !== "Tab" || elements.openingOverlay.hidden) return;
-    const candidates = [
-      elements.openingRoot.querySelector("[data-opening-stage]"),
-      elements.openingRoot.querySelector("[data-confirm-wrap].is-visible [data-confirm]"),
-    ].filter((candidate) => candidate && !candidate.disabled);
-    if (!candidates.length) return;
+    const focusable = elements.openingRoot.querySelectorAll('button:not([disabled]), [tabindex="0"]:not([disabled])');
+    const candidates = Array.from(focusable).filter((node) => node.offsetParent !== null);
+    if (candidates.length === 0) {
+      event.preventDefault();
+      return;
+    }
     const currentIndex = candidates.indexOf(document.activeElement);
     const nextIndex = event.shiftKey
       ? (currentIndex <= 0 ? candidates.length - 1 : currentIndex - 1)
@@ -538,6 +675,9 @@
 
   elements.tapZone.addEventListener("click", (event) => performTap(event));
 
+  elements.walletCard?.addEventListener("click", () => showExactMantecasToast());
+  elements.ambuWallet?.addEventListener("click", () => showExactMantecasToast());
+
   elements.navItems.forEach((button) => {
     button.addEventListener("click", () => navigate(button.dataset.nav));
   });
@@ -558,6 +698,26 @@
       else elements.ambuInfoDialog.removeAttribute("open");
     }
   });
+
+  elements.openEvolutionModal?.addEventListener("click", () => {
+    if (typeof elements.ambuEvolutionDialog?.showModal === "function") elements.ambuEvolutionDialog.showModal();
+    else if (elements.ambuEvolutionDialog) elements.ambuEvolutionDialog.setAttribute("open", "");
+  });
+
+  elements.closeEvolutionModal?.addEventListener("click", () => {
+    if (typeof elements.ambuEvolutionDialog?.close === "function") elements.ambuEvolutionDialog.close();
+    else elements.ambuEvolutionDialog?.removeAttribute("open");
+  });
+
+  elements.ambuEvolutionDialog?.addEventListener("click", (e) => {
+    const closeBtn = e.target.closest("[data-close-evolution-modal]");
+    if (closeBtn || e.target === elements.ambuEvolutionDialog) {
+      if (typeof elements.ambuEvolutionDialog.close === "function") elements.ambuEvolutionDialog.close();
+      else elements.ambuEvolutionDialog?.removeAttribute("open");
+    }
+  });
+
+  elements.buyEvolution?.addEventListener("click", buyAmbuEvolution);
 
   elements.ambuCharacter.addEventListener("click", touchAmbu);
   elements.buyAmbu.addEventListener("click", buyAmbuEgg);

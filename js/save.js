@@ -16,8 +16,7 @@
     "totalMantecasEarned",
     "totalMantecasSpent",
   ]);
-  const MAX_VALUE = Number.MAX_SAFE_INTEGER;
-  const AMBU_STAGES = Object.freeze(["locked", "egg", "hatching", "baby"]);
+  const AMBU_STAGES = Object.freeze(["locked", "egg", "hatching", "baby", "child", "teen", "adult", "master"]);
 
   let lastError = null;
 
@@ -29,7 +28,7 @@
     const numeric = typeof value === "string" && value.trim() !== "" ? Number(value) : value;
 
     if (!Number.isFinite(numeric) || numeric < 0) return fallback;
-    return Math.min(MAX_VALUE, Math.floor(numeric));
+    return Math.min(Number.MAX_SAFE_INTEGER, Math.floor(numeric));
   }
 
   function createCounts() {

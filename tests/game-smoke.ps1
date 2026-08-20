@@ -127,6 +127,12 @@ try {
         Start-Sleep -Milliseconds 100
         $ready = Invoke-PageScript -Expression 'document.readyState === "complete" && Boolean(window.LucioGame)'
     }
+    if (-not $ready) {
+        $diag = Invoke-PageScript -Expression 'JSON.stringify({ ready: document.readyState, config: Boolean(window.GAME_CONFIG), save: Boolean(window.LucioSave), state: Boolean(window.GameState), game: Boolean(window.LucioGame), opening: Boolean(window.OpeningSequence), col: Boolean(window.LucioCollection), ambu: Boolean(window.AmbuRenderer), events: window.__events })'
+        $scriptErrors = @($script:browserEvents | Where-Object { $_.method -eq 'Runtime.exceptionThrown' } | ForEach-Object { $_.params.exceptionDetails.text + " " + $_.params.exceptionDetails.exception.description })
+        Write-Output "DIAGNOSTICS: $diag"
+        Write-Output "SCRIPT ERRORS: $($scriptErrors -join ' | ')"
+    }
     Assert-True $ready 'juego carga todos sus modulos'
     Assert-Equal (Invoke-PageScript -Expression 'document.title') 'Lucio Lootbox Clicker' 'index es el juego real'
     Assert-True (Invoke-PageScript -Expression 'document.documentElement.scrollWidth <= window.innerWidth') 'sin overflow horizontal inicial'
@@ -264,10 +270,10 @@ try {
     Assert-Equal $hatchComplete.passive.offlineCapacity 10800 'capacidad offline es 1*3*3600=10800'
 
     # Check Ambu view for Baby Ambu (Rate card, Info button, and Info modal)
-    $babyAmbuView = Invoke-PageScript -Expression '(()=>{LucioGame.navigate("ambu",{focus:false});const infoBtnHidden=document.querySelector("[data-open-ambu-info]").hidden;const rateCardHidden=document.querySelector("[data-ambu-rate-card]").hidden;const rateCardText=document.querySelector("[data-ambu-rate-card] strong")?.textContent||"";const hasRateText=rateCardText.includes("1 Tap /s")&&rateCardText.includes("(1")&&rateCardText.includes("/s");document.querySelector("[data-open-ambu-info]").click();const infoModalOpen=document.querySelector("[data-ambu-info-dialog]").hasAttribute("open");const infoLore=document.querySelector("[data-ambu-info-lore]").textContent;document.querySelector("[data-close-ambu-info]").click();const infoModalClosed=!document.querySelector("[data-ambu-info-dialog]").hasAttribute("open");const closedEyesSrc=GAME_CONFIG.ambu.sprites.babyClosed;return {infoBtnHidden,rateCardHidden,hasRateText,infoModalOpen,hasLore:infoLore.includes("hambriento"),infoModalClosed,closedEyesSrc};})()'
+    $babyAmbuView = Invoke-PageScript -Expression '(()=>{LucioGame.navigate("ambu",{focus:false});const infoBtnHidden=document.querySelector("[data-open-ambu-info]").hidden;const rateCardHidden=document.querySelector("[data-ambu-rate-card]").hidden;const rateCardText=document.querySelector("[data-ambu-rate-card] strong")?.textContent||"";const hasRateText=rateCardText.includes("1 Tap")&&rateCardText.includes("(1")&&rateCardText.includes("s)");document.querySelector("[data-open-ambu-info]").click();const infoModalOpen=document.querySelector("[data-ambu-info-dialog]").hasAttribute("open")||document.querySelector("[data-ambu-info-dialog]").open;const infoLore=document.querySelector("[data-ambu-info-lore]").textContent;document.querySelector("[data-close-ambu-info]").click();const infoModalClosed=!document.querySelector("[data-ambu-info-dialog]").hasAttribute("open")&&!document.querySelector("[data-ambu-info-dialog]").open;const closedEyesSrc=GAME_CONFIG.ambu.sprites.babyClosed;return {infoBtnHidden,rateCardHidden,hasRateText,infoModalOpen,hasLore:infoLore.includes("hambriento"),infoModalClosed,closedEyesSrc};})()'
     Assert-Equal $babyAmbuView.infoBtnHidden $false 'boton de informacion visible para Ambu bebe'
     Assert-Equal $babyAmbuView.rateCardHidden $false 'caja de tasa pasiva visible en vista de Ambu bebe'
-    Assert-True $babyAmbuView.hasRateText 'caja de tasa pasiva muestra 1 Tap /s (1 🧈/s)'
+    Assert-True $babyAmbuView.hasRateText 'caja de tasa pasiva muestra 1 Tap / s (1 🧈/s)'
     Assert-True $babyAmbuView.infoModalOpen 'pulsar boton de info abre el popup modal'
     Assert-True $babyAmbuView.hasLore 'popup modal contiene la descripcion exacta de Ambu bebe'
     Assert-True $babyAmbuView.infoModalClosed 'cerrar popup modal oculta el dialogo'
@@ -277,31 +283,25 @@ try {
     $blinkTest = Invoke-PageScript -Expression 'new Promise(resolve => {
         LucioGame.navigate("ambu",{focus:false});
         const closedSprite = document.querySelector("[data-ambu-sprite-closed]");
-        const closedBackdrop = document.querySelector("[data-tap-ambu-backdrop-closed]");
         let sawClosedEyes = false;
-        let sawBackdropClosed = false;
         let restoredOpenEyes = false;
         
         const checkInterval = setInterval(() => {
             if (closedSprite && closedSprite.style.opacity === "1") {
                 sawClosedEyes = true;
-                if (closedBackdrop && closedBackdrop.style.opacity === "1") {
-                    sawBackdropClosed = true;
-                }
             } else if (sawClosedEyes && closedSprite && closedSprite.style.opacity === "0") {
                 restoredOpenEyes = true;
                 clearInterval(checkInterval);
-                resolve({ sawClosedEyes, sawBackdropClosed, restoredOpenEyes });
+                resolve({ sawClosedEyes, restoredOpenEyes });
             }
         }, 20);
         
         setTimeout(() => {
             clearInterval(checkInterval);
-            resolve({ sawClosedEyes, sawBackdropClosed, restoredOpenEyes });
+            resolve({ sawClosedEyes, restoredOpenEyes });
         }, 6000);
     })'
     Assert-True $blinkTest.sawClosedEyes 'Ambu cierra los ojos durante el ciclo de parpadeo'
-    Assert-True $blinkTest.sawBackdropClosed 'Ambu en fondo de Tap tambien cierra los ojos al parpadear'
     Assert-True $blinkTest.restoredOpenEyes 'Ambu abre los ojos tras parpadear'
 
     # Check Tap UI for Baby Ambu
@@ -353,15 +353,113 @@ try {
     Assert-Equal $antiCheat.debt3 0 'deuda completamente saldada'
     Assert-Equal $antiCheat.stored3 2400 'remanente de tiempo tras saldar deuda produce mantecas offline normalmente'
 
+    # -------------------------------------------------------------
+    # Large Number Formatting & Exact Toast
+    # -------------------------------------------------------------
+    $formatTest = Invoke-PageScript -Expression '(()=>{
+        const c1 = GAME_CONFIG.formatters.formatMantecasDisplay(950000);
+        const c2 = GAME_CONFIG.formatters.formatMantecasDisplay(10000000);
+        const c3 = GAME_CONFIG.formatters.formatMantecasDisplay(1234567890);
+        const c4 = GAME_CONFIG.formatters.formatMantecasDisplay(1e33);
+        const exact = GAME_CONFIG.formatters.formatNumberExact(10000000);
+        return { c1, c2, c3, c4, exact };
+    })()'
+    Assert-Equal $formatTest.c1.isScaled $false '< 1M no se escala'
+    Assert-Equal $formatTest.c1.amountText '950.000' '< 1M usa formato de enteros con separador'
+    Assert-Equal $formatTest.c2.isScaled $true '10M se escala'
+    Assert-Equal $formatTest.c2.amountText '10,000' '10M se muestra con 3 decimales'
+    Assert-True ($formatTest.c2.unitSubtitle.StartsWith('Millones de')) '10M muestra subtitulo Millones de'
+    Assert-True ($formatTest.c3.unitSubtitle.StartsWith('Billones de')) '1.2B muestra subtitulo Billones de'
+    Assert-True ($formatTest.c4.unitSubtitle.StartsWith('Decillones de')) '10^33 muestra subtitulo Decillones de'
+    Assert-Equal $formatTest.exact '10.000.000' 'formato exacto sin redondeo'
+
+    # -------------------------------------------------------------
+    # Evolution to Ambu Niño (10M cost, 0.9s rate, 6h offline cap)
+    # -------------------------------------------------------------
+    $evolutionSetup = Invoke-PageScript -Expression '(()=>{
+        const save = LucioSave.createDefault();
+        save.mantecas = 9999999;
+        save.stats.totalMantecasEarned = 10000000;
+        save.ambu.stage = "baby";
+        GameState.importSnapshot(save);
+        LucioGame.navigate("ambu", { focus: false });
+        
+        // Exact mantecas toast test
+        document.querySelector("[data-wallet-card]").click();
+        const toastText = document.querySelector("[data-game-toast]").textContent;
+        
+        // Evolution bar visible for baby
+        const barVisible = !document.querySelector("[data-ambu-evolution-bar]").hidden;
+        
+        // Evolution modal open
+        document.querySelector("[data-open-evolution-modal]").click();
+        const dialogOpen = document.querySelector("[data-ambu-evolution-dialog]").hasAttribute("open") || document.querySelector("[data-ambu-evolution-dialog]").open;
+        const buyBtnDisabled = document.querySelector("[data-buy-evolution]").disabled;
+        
+        // Insufficient purchase attempt
+        const buyFail = GameState.purchaseAmbuEvolution();
+        
+        return { toastText, barVisible, dialogOpen, buyBtnDisabled, buyFailReason: buyFail.reason };
+    })()'
+    Assert-True ($evolutionSetup.toastText.Contains("9.999.999")) 'toast muestra cantidad exacta de mantecas al tocar contador'
+    Assert-True $evolutionSetup.barVisible 'barra de evolucion visible para Ambu bebe'
+    Assert-True $evolutionSetup.dialogOpen 'modal de evolucion se abre al pulsar el boton'
+    Assert-True $evolutionSetup.buyBtnDisabled 'boton de evolucion deshabilitado con < 10M'
+    Assert-Equal $evolutionSetup.buyFailReason 'insufficient-mantecas' 'evolucion rechazada con < 10M'
+
+    # Grant 10M and evolve
+    $evolved = Invoke-PageScript -Expression '(()=>{
+        const save = LucioSave.createDefault();
+        save.mantecas = 10000000;
+        save.stats.totalMantecasEarned = 10000000;
+        save.ambu.stage = "baby";
+        GameState.importSnapshot(save);
+        
+        const buyResult = GameState.purchaseAmbuEvolution();
+        LucioGame.navigate("ambu", { focus: false });
+        
+        const stage = GameState.getAmbu().stage;
+        const remainingMantecas = GameState.getMantecas();
+        const passive = GameState.getPassiveRate();
+        const barHidden = document.querySelector("[data-ambu-evolution-bar]").hidden;
+        const subtitle = document.querySelector("[data-ambu-instruction]").textContent;
+        const spriteSrc = document.querySelector("[data-ambu-sprite]").src;
+        const backdropSrc = document.querySelector("[data-tap-ambu-backdrop] img").src;
+        
+        return {
+            buyOk: buyResult.ok,
+            stage,
+            remainingMantecas,
+            intervalMs: passive.intervalMs,
+            offlineCapHours: passive.offlineCapHours,
+            offlineCapacity: passive.offlineCapacity,
+            barHidden,
+            subtitle,
+            isAmbu3: spriteSrc.includes("Ambu_3.png"),
+            isBackdropAmbu3: backdropSrc.includes("Ambu_3.png")
+        };
+    })()'
+    Assert-True $evolved.buyOk 'evolucion a Ambu Niño exitosa'
+    Assert-Equal $evolved.stage 'child' 'etapa actualizada a child'
+    Assert-Equal $evolved.remainingMantecas 0 'descuenta exactamente 10.000.000 mantecas'
+    Assert-Equal $evolved.intervalMs 900 'tasa pasiva de Ambu Niño es de 1 tap cada 0.9s'
+    Assert-Equal $evolved.offlineCapHours 6 'cuota offline extendida a 6 horas'
+    Assert-Equal $evolved.offlineCapacity 24000 'capacidad offline a 6 horas con base 1 tap/0.9s'
+    Assert-True $evolved.barHidden 'barra de evolucion oculta tras evolucionar a niño'
+    Assert-Equal $evolved.subtitle 'Ha crecido y tiene una curiosidad arrolladora' 'subtitulo de Ambu Niño actualizado'
+    Assert-True $evolved.isAmbu3 'sprite de Ambu Niño es Ambu_3.png'
+    Assert-True $evolved.isBackdropAmbu3 'fondo difuminado estatico actualizado a Ambu_3.png'
+
     Invoke-Cdp -Method 'Page.reload' -Params @{ ignoreCache = $true } | Out-Null
     $reloaded = $false
     for ($attempt = 0; $attempt -lt 80 -and -not $reloaded; $attempt += 1) {
         Start-Sleep -Milliseconds 100
-        $reloaded = Invoke-PageScript -Expression 'document.readyState === "complete" && Boolean(window.LucioGame) && GameState.getMantecas() > 0'
+        $reloaded = Invoke-PageScript -Expression 'document.readyState === "complete" && Boolean(window.LucioGame)'
     }
     Assert-True $reloaded 'save sobrevive recarga'
-    Assert-Equal (Invoke-PageScript -Expression 'GameState.getAmbu().stage') 'baby' 'etapa baby de Ambu persiste tras recarga'
-    Assert-Equal (Invoke-PageScript -Expression 'GameState.getPassiveRate().active') $true 'tasa pasiva activa persiste tras recarga'
+    Assert-Equal (Invoke-PageScript -Expression 'GameState.getAmbu().stage') 'child' 'etapa child de Ambu persiste tras recarga'
+    Assert-Equal (Invoke-PageScript -Expression 'GameState.getPassiveRate().intervalMs') 900 'intervalo 900ms persiste tras recarga'
+    Assert-Equal (Invoke-PageScript -Expression 'GameState.getPassiveRate().offlineCapHours') 6 'capacidad 6h persiste tras recarga'
 
     $reset = Invoke-PageScript -Expression '(()=>{window.confirm=()=>true;document.querySelector("[data-open-settings]").click();document.querySelector("[data-reset-progress]").click();return {mantecas:GameState.getMantecas(),total:Object.values(GameState.getCounts()).reduce((sum,count)=>sum+count,0),stage:GameState.getAmbu().stage,stored:localStorage.getItem(LucioSave.key)}})()'
     Assert-Equal $reset.mantecas 0 'reset borra Mantecas'
@@ -402,17 +500,23 @@ try {
         stageSelect.dispatchEvent(new Event("change"));
         const eggSrc = sprite.src.includes("Ambu_1.png");
         
+        // Test stage select to child
+        stageSelect.value = "child";
+        stageSelect.dispatchEvent(new Event("change"));
+        const childSrc = sprite.src.includes("Ambu_3.png");
+
         // Return to baby
         stageSelect.value = "baby";
         stageSelect.dispatchEvent(new Event("change"));
         const backToBaby = sprite.src.includes("Ambu_2.png");
         
-        return { heldClosed, heldStatus, releasedOpen, eggSrc, backToBaby };
+        return { heldClosed, heldStatus, releasedOpen, eggSrc, childSrc, backToBaby };
     })()'
 
     Assert-True $playgroundAmbu.heldClosed 'Playground: Mantener ojos cerrados cambia sprite a closedEyes'
     Assert-True $playgroundAmbu.releasedOpen 'Playground: Liberar ojos restaura sprite a Ambu_2'
     Assert-True $playgroundAmbu.eggSrc 'Playground: Selector de etapa cambia a visual de huevo'
+    Assert-True $playgroundAmbu.childSrc 'Playground: Selector de etapa cambia a Ambu_3 (niño)'
     Assert-True $playgroundAmbu.backToBaby 'Playground: Selector de etapa vuelve a Ambu bebe'
 
     $exceptions = @($script:browserEvents | Where-Object { $_.method -eq 'Runtime.exceptionThrown' })

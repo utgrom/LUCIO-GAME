@@ -4,10 +4,71 @@
   const lucioOrder = ["bronze", "silver", "gold", "ruby", "diamond", "cosmic"];
   const collectionOrder = [...lucioOrder, ...lucioOrder.map((material) => `${material}Shiny`)];
 
+  const LARGE_NUMBER_TIERS = Object.freeze([
+    { exp: 33, label: "Decillones" },
+    { exp: 30, label: "Nonillones" },
+    { exp: 27, label: "Octillones" },
+    { exp: 24, label: "Septillones" },
+    { exp: 21, label: "Sextillones" },
+    { exp: 18, label: "Quintillones" },
+    { exp: 15, label: "Cuatrillones" },
+    { exp: 12, label: "Trillones" },
+    { exp: 9,  label: "Billones" },
+    { exp: 6,  label: "Millones" },
+  ]);
+
+  function formatNumberExact(value) {
+    const num = Number.isFinite(value) ? Math.floor(value) : 0;
+    return num.toLocaleString("es-ES");
+  }
+
+  function formatMantecasDisplay(value) {
+    const num = Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+
+    if (num < 1000000) {
+      return {
+        amountText: num.toLocaleString("es-ES"),
+        unitSubtitle: "",
+        isScaled: false,
+        exactText: num.toLocaleString("es-ES"),
+      };
+    }
+
+    for (let i = 0; i < LARGE_NUMBER_TIERS.length; i += 1) {
+      const tier = LARGE_NUMBER_TIERS[i];
+      const base = 10 ** tier.exp;
+      if (num >= base) {
+        const scaled = num / base;
+        const formatted = scaled.toLocaleString("es-ES", {
+          minimumFractionDigits: 3,
+          maximumFractionDigits: 3,
+        });
+        return {
+          amountText: formatted,
+          unitSubtitle: `${tier.label} de 🧈`,
+          isScaled: true,
+          exactText: num.toLocaleString("es-ES"),
+        };
+      }
+    }
+
+    return {
+      amountText: num.toLocaleString("es-ES"),
+      unitSubtitle: "",
+      isScaled: false,
+      exactText: num.toLocaleString("es-ES"),
+    };
+  }
+
   const GAME_CONFIG = {
     baseTapValue: 1,
     saveVersion: 2,
     saveKey: "lucioLootboxClicker.save.v1",
+    formatters: {
+      formatNumberExact,
+      formatMantecasDisplay,
+      largeNumberTiers: LARGE_NUMBER_TIERS,
+    },
     ambu: {
       discoveryThreshold: 50000,
       hatchPrice: 250000,
@@ -19,9 +80,9 @@
           offlineCapHours: 3,
         },
         child: {
-          intervalMs: 800,
-          offlineCapHours: 8,
-          evolutionPrice: 1000000,
+          intervalMs: 900,
+          offlineCapHours: 6,
+          evolutionPrice: 10000000,
         },
       },
       sprites: {
@@ -31,6 +92,8 @@
         crack3: "assets/invocados/Ambu_1_3.png",
         baby: "assets/invocados/Ambu_2.png",
         babyClosed: "assets/invocados/Ambu_2_closedEyes.png",
+        child: "assets/invocados/Ambu_3.png",
+        childClosed: "assets/invocados/Ambu_3_closedEyes.png",
       },
     },
     assets: {

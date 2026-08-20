@@ -771,6 +771,7 @@
     const btnHoldToggle = ambuPlaygroundRoot.querySelector("[data-ambu-hold-toggle]");
     const btnTapAnim = ambuPlaygroundRoot.querySelector("[data-ambu-tap-anim]");
     const btnBirthAnim = ambuPlaygroundRoot.querySelector("[data-ambu-birth-anim]");
+    const btnEvolveAnim = ambuPlaygroundRoot.querySelector("[data-ambu-evolve-anim]");
     const btnResetDefaults = ambuPlaygroundRoot.querySelector("[data-ambu-reset-defaults]");
 
     ambuPlayground = new window.AmbuRenderer({
@@ -829,6 +830,14 @@
       ambuPlayground.triggerBirth(() => {
         ambuStageSelect.value = "baby";
         showToast("¡Eclosión completada!");
+      });
+    });
+    btnEvolveAnim?.addEventListener("click", () => {
+      ambuStageSelect.value = "baby";
+      ambuPlayground.setStage("baby");
+      ambuPlayground.triggerEvolution(() => {
+        ambuStageSelect.value = "child";
+        showToast("¡Evolución a Ambu Niño completada!");
       });
     });
 

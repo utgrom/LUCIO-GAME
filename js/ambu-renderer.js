@@ -37,6 +37,8 @@
         crack3: "assets/invocados/Ambu_1_3.png",
         baby: "assets/invocados/Ambu_2.png",
         babyClosed: "assets/invocados/Ambu_2_closedEyes.png",
+        child: "assets/invocados/Ambu_3.png",
+        childClosed: "assets/invocados/Ambu_3_closedEyes.png",
       }, config.ambu?.sprites || {}, options.sprites || {});
 
       this.blinkConfig = Object.assign({}, DEFAULT_BLINK_CONFIG, options.blinkConfig || {});
@@ -56,17 +58,12 @@
 
       this.timers = {
         blink: null,
-        sub: null,
         animation: null,
       };
 
       this.listeners = new Set();
+      this.setupOverlays();
       this.setStage(this.stage);
-      this.applyBreathing();
-
-      if (this.blinkConfig.enabled && this.stage === "baby") {
-        this.startBlinking();
-      }
     }
 
     on(callback) {
@@ -133,36 +130,8 @@
           closed.style.transition = "none";
           this.elements.character.appendChild(closed);
         }
-        closed.src = this.sprites.babyClosed;
+        closed.src = this.stage === "child" ? this.sprites.childClosed : this.sprites.babyClosed;
         this.elements.closedSprite = closed;
-      }
-
-      if (this.elements.backdropImg && !this.elements.backdropClosedImg) {
-        const parent = this.elements.backdropImg.parentElement;
-        if (parent) {
-          let backdropClosed = parent.querySelector("[data-tap-ambu-backdrop-closed]");
-          if (!backdropClosed) {
-            backdropClosed = document.createElement("img");
-            backdropClosed.dataset.tapAmbuBackdropClosed = "";
-            backdropClosed.alt = "";
-            backdropClosed.draggable = false;
-            backdropClosed.style.position = "absolute";
-            backdropClosed.style.inset = "0";
-            backdropClosed.style.width = "100%";
-            backdropClosed.style.height = "100%";
-            backdropClosed.style.objectFit = "contain";
-            backdropClosed.style.pointerEvents = "none";
-            backdropClosed.style.opacity = "0";
-            backdropClosed.style.zIndex = "2";
-            backdropClosed.style.transition = "none";
-            if (window.getComputedStyle(parent).position === "static") {
-              parent.style.position = "relative";
-            }
-            parent.appendChild(backdropClosed);
-          }
-          backdropClosed.src = this.sprites.babyClosed;
-          this.elements.backdropClosedImg = backdropClosed;
-        }
       }
     }
 
@@ -172,8 +141,9 @@
         this.elements.stageWrap.dataset.stage = stage;
       }
       this.updateSpriteImages();
+      this.applyBreathing();
 
-      if (stage === "baby") {
+      if (stage === "baby" || stage === "child") {
         if (this.blinkConfig.enabled && !this.timers.blink && !this.state.isBlinking) {
           this.scheduleNextBlink();
         }
@@ -185,6 +155,7 @@
     }
 
     spriteForCurrentStage() {
+      if (this.stage === "child") return this.sprites.child;
       if (this.stage === "baby") return this.sprites.baby;
       if (this.stage === "crack3") return this.sprites.crack3;
       if (this.stage === "crack2") return this.sprites.crack2;
@@ -195,43 +166,42 @@
     updateSpriteImages() {
       this.setupOverlays();
 
-      const isClosed = (this.state.eyesClosed || this.state.manualHoldClosed) && this.stage === "baby";
+      const canBlink = this.stage === "baby" || this.stage === "child";
+      const isClosed = (this.state.eyesClosed || this.state.manualHoldClosed) && canBlink;
 
       if (this.elements.sprite) {
         const baseSrc = this.spriteForCurrentStage();
         if (this.elements.sprite.getAttribute("src") !== baseSrc) {
           this.elements.sprite.src = baseSrc;
         }
-        this.elements.sprite.alt = this.stage === "baby" ? "Ambu bebé" : "Huevo misterioso";
+        let altText = "Huevo misterioso";
+        if (this.stage === "child") altText = "Ambu niño";
+        else if (this.stage === "baby") altText = "Ambu bebé";
+        this.elements.sprite.alt = altText;
       }
 
       if (this.elements.closedSprite) {
-        if (this.elements.closedSprite.getAttribute("src") !== this.sprites.babyClosed) {
-          this.elements.closedSprite.src = this.sprites.babyClosed;
+        const targetClosedSrc = this.stage === "child" ? this.sprites.childClosed : this.sprites.babyClosed;
+        if (this.elements.closedSprite.getAttribute("src") !== targetClosedSrc) {
+          this.elements.closedSprite.src = targetClosedSrc;
         }
-        const targetOpacity = (isClosed && this.stage === "baby") ? "1" : "0";
+        const targetOpacity = isClosed ? "1" : "0";
         if (this.elements.closedSprite.style.opacity !== targetOpacity) {
           this.elements.closedSprite.style.opacity = targetOpacity;
         }
-        this.elements.closedSprite.style.display = (this.stage === "baby") ? "block" : "none";
+        this.elements.closedSprite.style.display = canBlink ? "block" : "none";
       }
 
       if (this.elements.backdropImg) {
-        const backdropSrc = this.stage === "baby" ? this.sprites.baby : this.sprites.egg;
+        let backdropSrc = this.sprites.egg;
+        if (this.stage === "child") {
+          backdropSrc = this.sprites.child;
+        } else if (this.stage === "baby") {
+          backdropSrc = this.sprites.baby;
+        }
         if (this.elements.backdropImg.getAttribute("src") !== backdropSrc) {
           this.elements.backdropImg.src = backdropSrc;
         }
-      }
-
-      if (this.elements.backdropClosedImg) {
-        if (this.elements.backdropClosedImg.getAttribute("src") !== this.sprites.babyClosed) {
-          this.elements.backdropClosedImg.src = this.sprites.babyClosed;
-        }
-        const targetBackdropOpacity = (isClosed && this.stage === "baby") ? "1" : "0";
-        if (this.elements.backdropClosedImg.style.opacity !== targetBackdropOpacity) {
-          this.elements.backdropClosedImg.style.opacity = targetBackdropOpacity;
-        }
-        this.elements.backdropClosedImg.style.display = (this.stage === "baby") ? "block" : "none";
       }
     }
 
@@ -374,7 +344,7 @@
       const img = this.elements.character.querySelector("img") || this.elements.sprite;
       if (!img) return;
 
-      if (this.breathingEnabled && this.stage === "baby") {
+      if (this.breathingEnabled && (this.stage === "baby" || this.stage === "child")) {
         img.style.animationName = "ambu-baby-breathe";
         img.style.animationDuration = `${this.breathingDuration}s`;
         img.style.animationTimingFunction = "ease-in-out";
@@ -401,7 +371,7 @@
         if (typeof onComplete === "function") onComplete();
         return;
       }
-      this.elements.character.classList.remove("is-tapped", "is-arriving");
+      this.elements.character.classList.remove("is-tapped", "is-arriving", "is-evolving");
       this.elements.character.classList.add("is-birthing");
 
       window.clearTimeout(this.timers.animation);
@@ -419,6 +389,31 @@
           this.applyBreathing();
         }, 760);
       }, config.ambu?.hatchDelayMs || 1450);
+    }
+
+    triggerEvolution(onComplete) {
+      if (!this.elements.character) {
+        if (typeof onComplete === "function") onComplete();
+        return;
+      }
+      this.elements.character.classList.remove("is-tapped", "is-arriving", "is-birthing");
+      this.elements.character.classList.add("is-evolving");
+
+      window.clearTimeout(this.timers.animation);
+      this.timers.animation = window.setTimeout(() => {
+        this.elements.character?.classList.remove("is-evolving");
+        this.setStage("child");
+        this.elements.character?.classList.add("is-arriving");
+
+        if (typeof onComplete === "function") {
+          onComplete();
+        }
+
+        this.timers.animation = window.setTimeout(() => {
+          this.elements.character?.classList.remove("is-arriving");
+          this.applyBreathing();
+        }, 760);
+      }, 1200);
     }
 
     updateConfig(newBlinkConfig = {}) {

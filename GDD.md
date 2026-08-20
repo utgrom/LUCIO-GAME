@@ -356,17 +356,17 @@ El pago, cada golpe, el nacimiento, las Mantecas pasivas y el banco offline se g
 | Etapa | Producción y sistemas | Estado |
 |---|---|---|
 | Huevo | Se descubre con 50k históricas, se compra por 250k y se eclosiona con 15 taps. | Implementado |
-| Bebé | Comienza la producción pasiva (1 tap cada 1.000 ms), banco offline de 3 horas y anti-cheat. | Implementado |
-| Niño | Desbloquea un espacio de aura (pulso cada 800 ms, banco de 8h) y, cuando exista v3, puede encabezar expediciones. | Decidido |
+| Bebé | Comienza la producción pasiva (1 tap cada 1.000 ms), banco offline de 3 horas, respiración y parpadeo GPU. | Implementado |
+| Niño | Cuesta 10.000.000 Mantecas. Aumenta producción pasiva a 1 tap cada 900 ms, banco offline de 6 horas, sprite `Ambu_3.png` y fondo estático. Prepara el sistema de auras. | Implementado |
 | Joven | Permite mejorar auras a nivel 2 y mejora su capacidad de combate. | Decidido |
 | Adulto | Permite equipar dos auras simultáneamente y mejora su capacidad de combate. | Decidido |
 | Maestro | Desbloquea auras nivel 3, creación del Lucio Multimaterial, auras Gábicas de v4 y nuevas ventajas de combate. | Decidido |
 
-Ambu Bebé ejecuta un pulso equivalente al valor actual de un tap cada `1.000 ms`. Ambu Niño reducirá ese intervalo a `800 ms`.
+Ambu Bebé ejecuta un pulso equivalente al valor actual de un tap cada `1.000 ms`. Ambu Niño reduce ese intervalo a `900 ms` (~1,11 taps/s) y extiende el banco offline a 6 horas.
 
 ## 10. Producción pasiva y offline
 
-**Implementado (etapa Bebé).** Amvorguezo es el responsable de la producción pasiva y offline. Los Lucios aportan al valor por tap.
+**Implementado (etapas Bebé y Niño).** Amvorguezo es el responsable de la producción pasiva y offline. Los Lucios aportan al valor por tap.
 
 La cifra mostrada como **Mantecas/s** es siempre una tasa final derivada centralizada (`GameState.getPassiveRate()`), no un valor fijo ni un simple contador de taps. Conceptualmente:
 
@@ -386,6 +386,8 @@ La economía expone una única función centralizada (`GameState.getPassiveRate(
 
 **Detalle del sistema implementado:**
 - **Bebé**: intervalo de `1.000 ms` (1 tap/s) y capacidad offline de 3 horas (`ratePerSecond * 3 * 3600`).
+- **Niño**: coste de evolución de `10.000.000 🧈`, intervalo de `900 ms` (~1,11 taps/s) y capacidad offline de 6 horas (`ratePerSecond * 6 * 3600`).
+- **Formateo de Grandes Números**: a partir de 1.000.000, los contadores de Mantecas se abrevian con 3 decimales (ej. `10,000` con subtítulo `Millones de 🧈`), escalando cada 3 ceros hasta `Decillones` ($10^{33}$). Al pulsar el contador se muestra un toast con la cifra exacta sin redondear.
 - **Acumulación Online**: bucle continuo vía `requestAnimationFrame` que acredita Mantecas al saldo activo.
 - **Banco Offline**: acumulación de tiempo en segundo plano con botón manual de **Recoger**.
 - **Anti-Cheat (Rollback)**: los retrocesos del reloj del dispositivo se registran como deuda temporal (`timeDebtMs`) que debe amortizarse antes de generar nuevas Mantecas offline.

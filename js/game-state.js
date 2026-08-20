@@ -421,6 +421,70 @@
       return Object.freeze({ ok: true, persisted, state: getSnapshot() });
     }
 
+    function canPurchaseAmbuEvolution() {
+      if (state.ambu.stage !== "baby") return false;
+      const price = config.ambu?.stages?.child?.evolutionPrice || 10000000;
+      return Number.isSafeInteger(price) && state.mantecas >= price;
+    }
+
+    function purchaseAmbuEvolution() {
+      if (state.ambu.stage !== "baby") {
+        return Object.freeze({ ok: false, reason: "invalid-stage" });
+      }
+
+      const price = config.ambu?.stages?.child?.evolutionPrice || 10000000;
+      if (!Number.isSafeInteger(price)) {
+        return Object.freeze({ ok: false, reason: "invalid-price" });
+      }
+
+      if (state.mantecas < price) {
+        return Object.freeze({
+          ok: false,
+          reason: "insufficient-mantecas",
+          price,
+          missing: price - state.mantecas,
+        });
+      }
+
+      state.mantecas -= price;
+      state.stats.totalMantecasSpent = safeAdd(state.stats.totalMantecasSpent, price);
+      state.ambu.stage = "child";
+      state.ambu.evolvedAt = Date.now();
+      state.ambu.lastActiveTimestamp = Date.now();
+      onlineSubTick = 0;
+
+      const persisted = saveImmediately();
+      emit("ambu-evolved", {
+        fromStage: "baby",
+        toStage: "child",
+        price,
+        persisted,
+      });
+
+      return Object.freeze({
+        ok: true,
+        fromStage: "baby",
+        toStage: "child",
+        price,
+        persisted,
+        state: getSnapshot(),
+        passiveRate: getPassiveRate(),
+      });
+    }
+
+    function purchaseAmbuEvolutionDebug() {
+      if (new URLSearchParams(window.location.search).get("debug") !== "1") {
+        return Object.freeze({ ok: false, reason: "debug-disabled" });
+      }
+      state.ambu.stage = "child";
+      state.ambu.evolvedAt = Date.now();
+      state.ambu.lastActiveTimestamp = Date.now();
+      onlineSubTick = 0;
+      const persisted = saveImmediately();
+      emit("ambu-evolved", { fromStage: "baby", toStage: "child", price: 0, persisted, debug: true });
+      return Object.freeze({ ok: true, price: 0, persisted, state: getSnapshot() });
+    }
+
     function getBackpack(backpackId) {
       return config.backpacks && config.backpacks[backpackId];
     }
@@ -542,7 +606,7 @@
       state = saveStore.clone(imported);
       dirty = false;
       discoverAmbu({ emitEvent: false });
-      if (state.ambu.stage === "baby") {
+      if (getPassiveRate().active) {
         resolveOfflineCatchup(Date.now(), { emitEvent: false });
       }
       emit("import", { persisted: true });
@@ -559,7 +623,7 @@
     }
 
     discoverAmbu({ emitEvent: false });
-    if (state.ambu.stage === "baby") {
+    if (getPassiveRate().active) {
       resolveOfflineCatchup(Date.now(), { emitEvent: false });
     }
 
@@ -578,6 +642,9 @@
       purchaseAmbuEgg,
       tapAmbuEgg,
       completeAmbuHatching,
+      canPurchaseAmbuEvolution,
+      purchaseAmbuEvolution,
+      purchaseAmbuEvolutionDebug,
       markAmbuNotificationSeen,
       resolveOfflineCatchup,
       tickOnline,
