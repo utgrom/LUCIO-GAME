@@ -246,15 +246,149 @@
           </aside>
         </div>
       </section>
+
+      <section class="playground-section" aria-labelledby="ambu-playground-title">
+        <header class="section-heading">
+          <div>
+            <span class="section-number">03 / INVOCADO</span>
+            <h2 id="ambu-playground-title">Ambu Bebé Visuals & Blinking Playground</h2>
+            <p>Laboratorio aislado para inspeccionar y afinar el parpadeo natural, la respiración y los estados de Ambu.</p>
+          </div>
+        </header>
+
+        <div class="section-grid" data-ambu-playground-root>
+          <div class="preview-pane ambu-preview">
+            <div class="preview-meta">
+              <span class="status-dot status-dot--active" data-ambu-live-dot>En vivo</span>
+              <output class="fps-readout" data-ambu-status-readout>Ojos abiertos</output>
+            </div>
+
+            <div class="ambu-stage-host" data-ambu-stage-host data-bg-mode="studio">
+              <div class="ambu-stage-backdrop-layer" data-ambu-backdrop-layer hidden>
+                <img src="assets/invocados/Ambu_2.png" alt="" draggable="false">
+              </div>
+
+              <div class="ambu-character-wrap">
+                <div class="ambu-character" data-ambu-character>
+                  <span class="ambu-character__aura" aria-hidden="true"></span>
+                  <img data-ambu-sprite src="assets/invocados/Ambu_2.png" alt="Ambu bebé" draggable="false">
+                </div>
+              </div>
+            </div>
+
+            <div class="ambu-stats-bar">
+              <div class="ambu-stat">
+                <span>Parpadeos</span>
+                <strong data-ambu-blink-counter>0</strong>
+              </div>
+              <div class="ambu-stat">
+                <span>Último tipo</span>
+                <strong data-ambu-last-type>--</strong>
+              </div>
+              <div class="ambu-stat">
+                <span>Próximo en</span>
+                <strong data-ambu-next-countdown>--</strong>
+              </div>
+              <div class="ambu-stat">
+                <span>Respiración</span>
+                <strong data-ambu-breathe-status>Activa (4.0s)</strong>
+              </div>
+            </div>
+          </div>
+
+          <aside class="controls-pane" aria-label="Controles de Ambu">
+            <div class="control-group">
+              <h3>Disparadores rápidos</h3>
+              <div class="button-row">
+                <button class="button button--primary" type="button" data-ambu-trigger-blink>Parpadeo simple</button>
+                <button class="button" type="button" data-ambu-trigger-double>Parpadeo doble</button>
+              </div>
+              <div class="button-row" style="margin-top: 8px;">
+                <button class="button" type="button" data-ambu-hold-toggle>Mantener ojos cerrados (Toggle)</button>
+                <button class="button" type="button" data-ambu-tap-anim>Animar Tap</button>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <h3>Escenario & Vista</h3>
+              <label class="field" for="ambu-stage-select">
+                <span>Etapa de Ambu</span>
+                <select id="ambu-stage-select" data-ambu-stage-select>
+                  <option value="egg">Huevo misterioso</option>
+                  <option value="crack1">Huevo agrietado 1</option>
+                  <option value="crack2">Huevo agrietado 2</option>
+                  <option value="crack3">Huevo agrietado 3</option>
+                  <option value="baby" selected>Ambu bebé</option>
+                  <option value="child">Ambu niño</option>
+                </select>
+              </label>
+
+              <label class="field" for="ambu-bg-select">
+                <span>Fondo del escenario</span>
+                <select id="ambu-bg-select" data-ambu-bg-select>
+                  <option value="studio" selected>Estudio oscuro</option>
+                  <option value="tap-backdrop">Fondo difuminado (Vista Tap)</option>
+                  <option value="transparent">Cuadrícula transparente</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="control-group">
+              <h3>Respiración (Idle)</h3>
+              <label class="toggle"><input type="checkbox" data-ambu-breathe-toggle checked>Activar respiración</label>
+              <div class="slider-field" style="margin-top: 10px;">
+                <div class="slider-field__head">
+                  <span>Velocidad de ciclo</span>
+                  <output data-ambu-breathe-val>4.0s</output>
+                </div>
+                <input type="range" min="1.0" max="8.0" step="0.2" value="4.0" data-ambu-breathe-speed>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <h3>Parámetros de Parpadeo</h3>
+              <label class="toggle"><input type="checkbox" data-ambu-auto-blink-toggle checked>Parpadeo automático continuo</label>
+
+              <div class="slider-field" style="margin-top: 10px;">
+                <div class="slider-field__head">
+                  <span>Probabilidad parpadeo doble</span>
+                  <output data-ambu-double-val>15%</output>
+                </div>
+                <input type="range" min="0" max="100" step="5" value="15" data-ambu-double-chance>
+              </div>
+
+              <div class="slider-field" style="margin-top: 10px;">
+                <div class="slider-field__head">
+                  <span>Frecuencia común (70%)</span>
+                  <output data-ambu-freq-val>2.5s - 4.5s</output>
+                </div>
+                <input type="range" min="1.0" max="8.0" step="0.5" value="3.5" data-ambu-freq-base>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <h3>Acciones</h3>
+              <div class="button-row">
+                <button class="button" type="button" data-ambu-birth-anim>Ejecutar eclosión</button>
+                <button class="button" type="button" data-ambu-evolve-anim>Ejecutar evolución</button>
+              </div>
+              <div class="button-row" style="margin-top: 8px;">
+                <button class="button" type="button" data-ambu-reset-defaults>Restablecer valores</button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
     </div>
   </main>
 
   <div class="toast" data-toast role="status" aria-live="polite"></div>
 
-  <script src="js/config.js?v=20260813-game-03"></script>
+  <script src="js/config.js?v=20260820-ambu-child-01"></script>
   <script src="js/lucio-renderer.js?v=20260813-game-03"></script>
   <script src="js/backpack-renderer.js?v=20260813-game-03"></script>
+  <script src="js/ambu-renderer.js?v=20260820-ambu-child-01"></script>
   <script src="js/audio.js?v=20260813-game-03"></script>
-  <script src="js/playground.js?v=20260813-game-03"></script>
+  <script src="js/playground.js?v=20260820-ambu-child-01"></script>
 </body>
 </html>

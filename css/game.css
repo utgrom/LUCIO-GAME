@@ -178,22 +178,29 @@ button { color: inherit; }
   top: 14px;
   right: max(12px, env(safe-area-inset-right));
   display: flex;
-  width: 58px;
-  height: 46px;
+  min-width: 66px;
+  height: 52px;
   align-items: center;
   justify-content: center;
-  gap: 1px;
-  padding: 3px 4px 3px 9px;
-  border: 1px solid rgba(255, 193, 127, .28);
+  gap: 2px;
+  padding: 4px 6px 4px 10px;
+  border: 1px solid rgba(255, 193, 127, .38);
   border-radius: 999px;
   color: #ffe5c2;
-  background: rgba(19, 15, 12, .82);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, .28);
+  background: rgba(19, 15, 12, .88);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .32);
   cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
-.tap-subview-arrow > span { font-size: 1.35rem; line-height: 1; }
-.tap-subview-arrow img { width: 32px; height: 32px; object-fit: contain; }
+.tap-subview-arrow:hover {
+  transform: scale(1.05);
+  box-shadow: 0 14px 32px rgba(255, 126, 29, .22);
+}
+
+.tap-subview-arrow:active { transform: scale(0.96); }
+.tap-subview-arrow > span { font-size: 1.55rem; line-height: 1; }
+.tap-subview-arrow img { width: 38px; height: 38px; object-fit: contain; }
 
 .wallet-card {
   position: relative;
@@ -228,6 +235,27 @@ button { color: inherit; }
   font-size: 0.58em;
   letter-spacing: 0;
   filter: drop-shadow(0 6px 14px rgba(255, 183, 62, 0.22));
+}
+
+.wallet-card {
+  cursor: pointer;
+  user-select: none;
+  transition: transform 120ms ease;
+}
+
+.wallet-card:active {
+  transform: scale(0.98);
+}
+
+.wallet-card__unit,
+.ambu-wallet__unit {
+  display: block;
+  margin-top: 1px;
+  color: var(--orange);
+  font-size: clamp(0.72rem, 3.2vw, 0.92rem);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .wallet-card__rate {
@@ -445,9 +473,49 @@ button { color: inherit; }
 .ambu-stage__header { position: relative; z-index: 3; }
 .ambu-stage__header p,
 .ambu-action-card > span,
-.ambu-baby-card > span { margin: 0 0 5px; color: var(--orange-2); font-size: .6rem; font-weight: 950; letter-spacing: .18em; }
+.ambu-stage__header p,
+.ambu-action-card > span { margin: 0 0 5px; color: var(--orange-2); font-size: .6rem; font-weight: 950; letter-spacing: .18em; }
 .ambu-stage__header h1 { margin: 0; font-size: clamp(1.65rem, 9vw, 3.1rem); letter-spacing: -.045em; line-height: 1; }
 .ambu-stage__header > span { display: block; max-width: 420px; margin: 8px auto 0; color: var(--muted); font-size: .74rem; line-height: 1.45; }
+
+.ambu-character-wrap {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+}
+
+.ambu-info-btn {
+  position: absolute;
+  right: 4%;
+  bottom: 6%;
+  z-index: 10;
+  display: grid;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid rgba(255, 193, 127, 0.45);
+  border-radius: 50%;
+  background: rgba(18, 14, 10, 0.9);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 16px rgba(255, 140, 40, 0.2);
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.ambu-info-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 24px rgba(255, 160, 60, 0.35);
+}
+
+.ambu-info-btn:active { transform: scale(0.94); }
+
+.ambu-info-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  pointer-events: none;
+}
 
 .ambu-character {
   position: relative;
@@ -497,8 +565,70 @@ button { color: inherit; }
 .ambu-character.is-tapped img { animation: ambu-egg-tap 420ms cubic-bezier(.36,.07,.19,.97); }
 .ambu-character.is-birthing img { animation: ambu-egg-birth 1.35s cubic-bezier(.4,0,.2,1) both; }
 .ambu-character.is-arriving img { animation: ambu-baby-arrive 720ms cubic-bezier(.2,.9,.25,1.2) both; }
+.ambu-character.is-evolving img { animation: ambu-evolve-flare 1.2s cubic-bezier(.4,0,.2,1) both; }
+
+.ambu-evolution-bar {
+  display: flex;
+  justify-content: center;
+  width: min(100%, 430px);
+  margin: -4px auto 8px;
+}
+
+.game-button--evolution {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border: 1px solid rgba(255, 178, 95, 0.65);
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ff8124, #ffbf47);
+  color: #241303;
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  box-shadow: 0 8px 24px rgba(255, 140, 40, 0.38), 0 0 16px rgba(255, 200, 100, 0.25);
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.game-button--evolution:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 12px 30px rgba(255, 140, 40, 0.5), 0 0 22px rgba(255, 200, 100, 0.35);
+}
+
+.game-button--evolution:active {
+  transform: scale(0.97);
+}
+
+.game-button--evolution .evolution-btn__icon {
+  font-size: 1.05rem;
+  color: #fff;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.85);
+}
+
+.game-button--evolution .evolution-btn__badge {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.18);
+  font-size: 0.66rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+}
+
 .ambu-stage[data-stage="baby"] .ambu-character { width: min(76vw, 43vh, 430px); cursor: default; }
 .ambu-stage[data-stage="baby"] .ambu-character__aura { background: radial-gradient(circle, rgba(181, 255, 119, .16), transparent 68%); }
+.ambu-stage[data-stage="baby"] .ambu-character:not(.is-birthing):not(.is-arriving):not(.is-evolving) img {
+  animation: ambu-baby-breathe 4s ease-in-out infinite;
+  transform-origin: 50% 82%;
+}
+
+.ambu-stage[data-stage="child"] .ambu-character { width: min(80vw, 46vh, 460px); cursor: default; }
+.ambu-stage[data-stage="child"] .ambu-character__aura { background: radial-gradient(circle, rgba(119, 230, 255, .22), transparent 68%); }
+.ambu-stage[data-stage="child"] .ambu-character:not(.is-birthing):not(.is-arriving):not(.is-evolving) img {
+  animation: ambu-baby-breathe 4s ease-in-out infinite;
+  transform-origin: 50% 82%;
+}
 
 .ambu-hatch-progress {
   display: grid;
@@ -512,7 +642,7 @@ button { color: inherit; }
 .ambu-hatch-progress__track i { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #ff8124, #ffd083); box-shadow: 0 0 14px rgba(255, 154, 65, .34); transition: width 240ms ease; }
 
 .ambu-action-card,
-.ambu-baby-card {
+.ambu-rate-card {
   display: grid;
   width: min(100%, 430px);
   gap: 5px;
@@ -524,13 +654,42 @@ button { color: inherit; }
 }
 
 .ambu-action-card h2 { margin: 0; font-size: 1.12rem; }
-.ambu-action-card p,
-.ambu-baby-card p { margin: 2px 0 9px; color: var(--muted); font-size: .7rem; line-height: 1.45; }
+.ambu-action-card p { margin: 2px 0 9px; color: var(--muted); font-size: .7rem; line-height: 1.45; }
 .ambu-action-card small { min-height: 1em; color: #be8d61; font-size: .61rem; }
-.ambu-baby-card { border-color: rgba(200, 255, 107, .15); background: rgba(20, 29, 18, .76); }
-.ambu-baby-card > span { color: var(--green); }
-.ambu-baby-card > strong { font-size: .95rem; }
-.ambu-baby-card p { margin-bottom: 0; }
+
+.ambu-rate-card {
+  gap: 4px;
+  padding: 16px 20px;
+  place-items: center;
+  border-color: rgba(200, 255, 107, .24);
+  color: #eaffc9;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(200, 255, 107, .12), transparent 70%),
+    rgba(18, 26, 16, .85);
+  text-align: center;
+}
+
+.ambu-rate-card__badge {
+  color: var(--green);
+  font-size: .62rem;
+  font-weight: 950;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+.ambu-rate-card__value {
+  color: #fff;
+  font-size: clamp(1.2rem, 5.5vw, 1.7rem);
+  font-weight: 900;
+  letter-spacing: -.03em;
+}
+
+.ambu-rate-card__value small {
+  color: var(--muted);
+  font-size: .82em;
+  font-weight: 750;
+  letter-spacing: normal;
+}
 
 @keyframes ambu-egg-tap {
   0%, 100% { transform: rotate(0deg) scale(1); }
@@ -552,6 +711,14 @@ button { color: inherit; }
   0% { transform: scale(.35) translateY(16px); filter: brightness(2); opacity: 0; }
   58% { transform: scale(1.08) translateY(-5px); opacity: 1; }
   100% { transform: scale(1) translateY(0); filter: brightness(1); opacity: 1; }
+}
+
+@keyframes ambu-evolve-flare {
+  0% { transform: scale(1); filter: brightness(1) drop-shadow(0 26px 24px rgba(0, 0, 0, 0.5)); }
+  25% { transform: scale(1.1) rotate(-3deg); filter: brightness(1.4) drop-shadow(0 0 35px rgba(255, 200, 100, 0.6)); }
+  50% { transform: scale(0.92) rotate(3deg); filter: brightness(1.7) drop-shadow(0 0 45px rgba(119, 230, 255, 0.8)); }
+  75% { transform: scale(1.18); filter: brightness(2.2) drop-shadow(0 0 55px rgba(255, 255, 255, 0.95)); }
+  100% { transform: scale(0.4); filter: brightness(3); opacity: 0; }
 }
 
 @keyframes ambu-aura { 50% { opacity: 1; transform: scale(1.08); } }
@@ -804,18 +971,20 @@ button { color: inherit; }
 
 .opening-card .opening-stage { min-height: min(720px, calc(100dvh - 24px)); }
 
+.game-dialog,
 .settings-dialog {
-  width: min(92vw, 460px);
+  width: min(92vw, 480px);
   max-height: calc(100dvh - 28px);
   padding: 0;
   border: 1px solid var(--line-strong);
-  border-radius: 22px;
+  border-radius: 24px;
   color: var(--text);
   background: #101419;
-  box-shadow: 0 30px 100px rgba(0,0,0,.65);
+  box-shadow: 0 30px 100px rgba(0,0,0,.7);
 }
 
-.settings-dialog::backdrop { background: rgba(2,4,6,.74); backdrop-filter: blur(8px); }
+.game-dialog::backdrop,
+.settings-dialog::backdrop { background: rgba(2,4,6,.78); backdrop-filter: blur(10px); }
 
 .settings-panel { padding: 20px; }
 .settings-panel > header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
@@ -847,31 +1016,221 @@ button { color: inherit; }
 .settings-row--danger { border-color: rgba(255,104,104,.18); color: #ffadad; }
 .settings-meta { margin-top: 18px; color: #5e6871; font-family: ui-monospace, monospace; font-size: .62rem; text-align: center; }
 
+/* Ambu Info Modal */
+.ambu-info-modal {
+  padding: 24px 22px 20px;
+}
+
+.ambu-info-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.ambu-info-modal__kicker {
+  display: block;
+  color: var(--orange-2);
+  font-size: 0.62rem;
+  font-weight: 950;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.ambu-info-modal__header h2 {
+  margin: 2px 0 0;
+  font-size: 1.65rem;
+  letter-spacing: -0.04em;
+}
+
+.ambu-info-modal__lore {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border-left: 3px solid var(--orange);
+  border-radius: 0 12px 12px 0;
+  background: rgba(255, 137, 31, 0.07);
+  color: #ffe6ce;
+  font-size: 0.84rem;
+  font-style: italic;
+  line-height: 1.55;
+}
+
+.ambu-info-modal__divider {
+  height: 1px;
+  margin: 14px 0;
+  background: var(--line);
+}
+
+.ambu-info-modal__stats {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+}
+
+.ambu-info-modal__stats li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.025);
+  color: #d6dde2;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.ambu-info-modal__stats li strong {
+  color: #fff;
+}
+
+.ambu-info-modal__stat-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.ambu-evolution-modal {
+  width: min(92vw, 440px);
+  border: 1px solid rgba(255, 178, 95, 0.4);
+  border-radius: 20px;
+  background: rgba(18, 22, 28, 0.96);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 35px rgba(255, 160, 60, 0.15);
+  color: var(--text);
+  overflow: hidden;
+}
+
+.ambu-evolution-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ambu-evolution-modal__kicker {
+  display: block;
+  color: var(--orange);
+  font-size: 0.64rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.ambu-evolution-modal__header h2 {
+  margin: 2px 0 0;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+}
+
+.ambu-evolution-modal__body {
+  padding: 18px 20px 12px;
+}
+
+.ambu-evolution-modal__lead {
+  margin: 0 0 16px;
+  color: #e2e8f0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.ambu-evolution-benefits {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.ambu-evolution-benefits__title {
+  color: var(--muted);
+  font-size: 0.65rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ambu-evolution-benefits__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.ambu-evolution-benefits__list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #d6dde2;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.ambu-evolution-benefits__list li strong {
+  color: #fff;
+}
+
+.ambu-evolution-benefits__list .benefit-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.ambu-evolution-modal__footer {
+  display: grid;
+  gap: 6px;
+  padding: 14px 20px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ambu-evolution-modal__help {
+  min-height: 1em;
+  color: #be8d61;
+  font-size: 0.65rem;
+  text-align: center;
+}
+
+@keyframes ambu-baby-breathe {
+  0%, 100% {
+    transform: scale(1, 1);
+  }
+  50% {
+    transform: scale(0.985, 1.025) translateY(-2px);
+  }
+}
+
 .game-toast {
   position: fixed;
   z-index: 150;
   right: 16px;
-  bottom: calc(var(--nav-height) + 14px + env(safe-area-inset-bottom));
+  bottom: calc(var(--nav-height) + 16px + env(safe-area-inset-bottom));
   left: 16px;
-  max-width: 420px;
+  max-width: 540px;
   margin: 0 auto;
-  padding: 12px 14px;
-  border: 1px solid rgba(200,255,107,.25);
-  border-radius: 12px;
-  color: #eaffc9;
-  background: rgba(20,30,18,.96);
-  box-shadow: 0 16px 38px rgba(0,0,0,.4);
-  font-size: .76rem;
+  padding: 16px 22px;
+  border: 1px solid rgba(200,255,107,.35);
+  border-radius: 18px;
+  color: #f3ffe0;
+  background: rgba(18, 28, 16, .98);
+  box-shadow: 0 20px 48px rgba(0,0,0,.55), 0 0 25px rgba(200, 255, 107, .12);
+  font-size: 0.95rem;
+  font-weight: 750;
+  line-height: 1.45;
+  text-align: center;
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(12px);
   pointer-events: none;
-  transition: 180ms ease;
+  transition: 200ms ease;
 }
 
 .game-toast.is-visible { opacity: 1; transform: none; }
-.game-toast[data-tone="warning"] { border-color: rgba(255, 178, 95, .34); color: #ffe1ba; background: rgba(49, 30, 13, .96); }
-.game-toast[data-tone="error"] { border-color: rgba(255, 104, 104, .34); color: #ffd0d0; background: rgba(48, 17, 19, .96); }
-.game-toast[data-tone="discovery"] { border-color: rgba(255, 190, 121, .38); color: #fff0d8; background: rgba(48, 29, 15, .97); }
+.game-toast[data-tone="warning"] { border-color: rgba(255, 178, 95, .45); color: #fff1dc; background: rgba(49, 30, 13, .98); box-shadow: 0 20px 48px rgba(0,0,0,.55), 0 0 25px rgba(255, 178, 95, .15); }
+.game-toast[data-tone="error"] { border-color: rgba(255, 104, 104, .45); color: #ffe4e4; background: rgba(48, 17, 19, .98); box-shadow: 0 20px 48px rgba(0,0,0,.55), 0 0 25px rgba(255, 104, 104, .15); }
+.game-toast[data-tone="discovery"] { border-color: rgba(255, 190, 121, .55); color: #fff5e6; background: rgba(48, 29, 15, .98); box-shadow: 0 20px 48px rgba(0,0,0,.55), 0 0 30px rgba(255, 190, 121, .22); }
 
 @keyframes tap-ring-spin { to { transform: rotate(360deg); } }
 @keyframes tap-pop {
@@ -886,11 +1245,23 @@ button { color: inherit; }
   .game-header { padding-right: 28px; padding-left: 28px; }
   .view { padding: 34px 28px 48px; }
   .tap-view { grid-template-rows: auto minmax(300px, 1fr) auto; }
+  .tap-subview-arrow {
+    top: 18px;
+    right: 20px;
+    min-width: 86px;
+    height: 64px;
+    gap: 4px;
+    padding: 6px 10px 6px 14px;
+  }
+  .tap-subview-arrow > span { font-size: 1.95rem; }
+  .tap-subview-arrow img { width: 48px; height: 48px; }
   .ambu-view { padding-top: 30px; }
+  .ambu-info-btn { width: 56px; height: 56px; right: 6%; bottom: 6%; }
   .shop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .backpack-card:last-child { grid-column: 1 / -1; }
   .lucio-collection { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .opening-card .opening-stage { min-height: min(760px, calc(100dvh - 32px)); }
+  .game-toast { max-width: 640px; padding: 18px 28px; font-size: 1.08rem; }
 }
 
 @media (min-width: 1040px) {
@@ -913,6 +1284,16 @@ button { color: inherit; }
   .bottom-nav__item b { font-size: .67rem; }
   .bottom-nav__item i { top: 18px; }
   .tap-view { min-height: calc(100vh - 64px); }
+  .tap-subview-arrow {
+    top: 22px;
+    right: 28px;
+    min-width: 98px;
+    height: 72px;
+    gap: 6px;
+    padding: 8px 12px 8px 18px;
+  }
+  .tap-subview-arrow > span { font-size: 2.2rem; }
+  .tap-subview-arrow img { width: 54px; height: 54px; }
   .shop-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .backpack-card,
   .backpack-card:last-child { grid-column: auto; grid-template-columns: 1fr; }
@@ -938,7 +1319,8 @@ button { color: inherit; }
   .ambu-character { width: min(54vw, 29vh, 210px); }
   .ambu-stage[data-stage="baby"] .ambu-character { width: min(63vw, 35vh, 250px); }
   .ambu-action-card,
-  .ambu-baby-card { padding: 12px 14px; }
+  .ambu-rate-card { padding: 12px 14px; }
+  .ambu-action-card p { margin-bottom: 6px; }
   .ambu-action-card p { margin-bottom: 6px; }
 
   .opening-overlay { padding: 4px; }
@@ -967,6 +1349,7 @@ button { color: inherit; }
   .tap-zone__rings { animation: none; }
   .tap-pop { animation-duration: 1ms; }
   .ambu-character__aura { animation: none; }
+  .ambu-stage[data-stage="baby"] .ambu-character img { animation: none; }
   .ambu-character.is-tapped img,
   .ambu-character.is-birthing img,
   .ambu-character.is-arriving img { animation-duration: 1ms; }

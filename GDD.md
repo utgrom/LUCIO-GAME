@@ -96,7 +96,7 @@ Balance, probabilidades, límites, duraciones y efectos deben vivir en configura
 | Versión | Tema central | Estado |
 |---|---|---|
 | v1 | Clicker, mochilas, 12 Lucios, colección y playground | Implementado |
-| v2 | Huevo, crianza de Amvorguezo y auras de material | Diseño decidido; balance pendiente |
+| v2 | Huevo, crianza de Amvorguezo y auras de material | En progreso (Huevo, eclosión, Ambu bebé, producción pasiva 1 tap/s, banco offline 3h y anti-cheat implementados; auras y etapas niño a maestro pendientes) |
 | v3 | Expediciones asincrónicas y combate simple por turnos | Diseño en definición |
 | v4 | Gabos, Gabrario, Morgryn y auras Gábicas | Diseño en definición |
 
@@ -330,13 +330,13 @@ Equipar auras y modificar producción/combate
 
 Los pasos de huevo, alimentación y eclosión son gastos impulsados inicialmente por la curiosidad. La producción comienza recién al nacer.
 
-### 8.1 Primer hito implementable: del hallazgo a Ambu Bebé
+### 8.1 Primer hito: del hallazgo a Ambu Bebé
 
-**Decidido.** El primer contacto con Ambu sigue esta secuencia:
+**Implementado.** El primer contacto con Ambu sigue esta secuencia:
 
-1. Al alcanzar por primera vez `50.000` Mantecas disponibles, se descubre el huevo. El hallazgo es permanente aunque luego baje el saldo.
-2. Se muestra una sola vez el mensaje: “Entre las barras de Manteca, distingues un huevo misterioso...”.
-3. Se habilita desde Tap una flecha con el icono del huevo que abre la vista de Ambu.
+1. Al alcanzar por primera vez `50.000` Mantecas producidas históricamente (`stats.totalMantecasEarned`), se descubre el huevo. El hallazgo es permanente aunque el saldo actual se gaste o disminuya.
+2. Se muestra una sola vez el mensaje en toast: “Entre las barras de Manteca, distingues un huevo misterioso...”.
+3. Se habilita desde Tap una flecha destacada con el icono del huevo que abre la vista de Ambu.
 4. Tocar el huevo antes de pagar sólo lo agita; no da recursos ni progreso.
 5. Eclosionarlo cuesta `250.000` Mantecas.
 6. Después del pago se requieren `15` golpes persistentes al cascarón:
@@ -345,27 +345,30 @@ Los pasos de huevo, alimentación y eclosión son gastos impulsados inicialmente
    - golpes `10–14`: `Ambu_1_2.png`;
    - golpe `15`: `Ambu_1_3.png`.
 7. Tras el golpe 15, el huevo se estira y comprime antes de transformarse en `Ambu_2.png`, desbloqueando a **Ambu Bebé**.
+8. Al nacer, se presenta un PopUp de bienvenida:
+   - *NUEVO COMPAÑERO: Ambu bebé se ha unido a ti. Parece hambriento, curioso y cargado de una energía extraña.*
+9. En la vista de Ambu bebé se muestra la tarjeta de producción pasiva (`1 Tap / s`) y un botón circular de información (`assets/UI/AmbuInfoButton.png`) que despliega la descripción y estadísticas de la criatura.
 
-El pago, cada golpe y el nacimiento se guardan inmediatamente. Una recarga no puede duplicar el coste, perder golpes ni impedir que finalice un nacimiento que ya alcanzó el golpe 15.
+El pago, cada golpe, el nacimiento, las Mantecas pasivas y el banco offline se guardan inmediatamente. Una recarga no puede duplicar el coste, perder golpes ni alterar la progresión.
 
 ## 9. Etapas de Amvorguezo
 
-| Etapa | Producción y sistemas |
-|---|---|
-| Huevo | Se compra, alimenta e incuba con Mantecas. No produce. |
-| Bebé | Comienza la producción pasiva de Mantecas. |
-| Niño | Desbloquea un espacio de aura y, cuando exista v3, puede encabezar expediciones. |
-| Joven | Permite mejorar auras a nivel 2 y mejora su capacidad de combate. |
-| Adulto | Permite equipar dos auras simultáneamente y mejora su capacidad de combate. |
-| Maestro | Desbloquea auras nivel 3, creación del Lucio Multimaterial, auras Gábicas de v4 y nuevas ventajas de combate. |
+| Etapa | Producción y sistemas | Estado |
+|---|---|---|
+| Huevo | Se descubre con 50k históricas, se compra por 250k y se eclosiona con 15 taps. | Implementado |
+| Bebé | Comienza la producción pasiva (1 tap cada 1.000 ms), banco offline de 3 horas, respiración y parpadeo GPU. | Implementado |
+| Niño | Cuesta 10.000.000 Mantecas. Aumenta producción pasiva a 1 tap cada 900 ms, banco offline de 6 horas, sprite `Ambu_3.png` y fondo estático. Prepara el sistema de auras. | Implementado |
+| Joven | Permite mejorar auras a nivel 2 y mejora su capacidad de combate. | Decidido |
+| Adulto | Permite equipar dos auras simultáneamente y mejora su capacidad de combate. | Decidido |
+| Maestro | Desbloquea auras nivel 3, creación del Lucio Multimaterial, auras Gábicas de v4 y nuevas ventajas de combate. | Decidido |
 
-Ambu Bebé ejecuta inicialmente un pulso equivalente al valor actual de un tap cada `1.000 ms`. Ambu Niño reduce ese intervalo a `800 ms`. Las etapas posteriores podrán reducirlo mucho más; por ejemplo, un intervalo de `100 ms` equivale a diez pulsos por segundo antes de aplicar otros modificadores.
+Ambu Bebé ejecuta un pulso equivalente al valor actual de un tap cada `1.000 ms`. Ambu Niño reduce ese intervalo a `900 ms` (~1,11 taps/s) y extiende el banco offline a 6 horas.
 
 ## 10. Producción pasiva y offline
 
-**Decidido.** Amvorguezo será el responsable de la producción pasiva y offline. Los Lucios seguirán aportando principalmente al valor por tap.
+**Implementado (etapas Bebé y Niño).** Amvorguezo es el responsable de la producción pasiva y offline. Los Lucios aportan al valor por tap.
 
-La cifra mostrada como **Mantecas/s** es siempre una tasa final derivada, no un valor fijo ni un simple contador de taps. Conceptualmente:
+La cifra mostrada como **Mantecas/s** es siempre una tasa final derivada centralizada (`GameState.getPassiveRate()`), no un valor fijo ni un simple contador de taps. Conceptualmente:
 
 ```text
 Pulsos por segundo = 1.000 / intervalo actual en milisegundos
@@ -379,18 +382,15 @@ Mantecas/s finales = producción pasiva base
                      × otros efectos explícitos
 ```
 
-La economía debe exponer una única función para calcular esta tasa final. La interfaz, la acumulación online, la producción offline y las futuras recompensas expresadas en tiempo de producción deben consultar esa misma función, evitando duplicar fórmulas o guardar `Mantecas/s` como un dato independiente.
+La economía expone una única función centralizada (`GameState.getPassiveRate()`) para calcular esta tasa final. La interfaz, la acumulación online, la producción offline y las futuras recompensas consultan esa misma función, evitando duplicar fórmulas o guardar `Mantecas/s` como un dato independiente.
 
-Esto permite que auras diferentes creen combinaciones emergentes, por ejemplo:
-
-- aumentar la velocidad de producción de Amvorguezo;
-- aumentar la capacidad máxima de producción offline;
-- multiplicar la producción pasiva;
-- mejorar taps en vez de producción pasiva.
-
-La interacción entre esos efectos no necesita un nombre de combo ni un bonus oculto adicional.
-
-**Decidido para el primer hito:** Bebé usa un intervalo de `1.000 ms` y una capacidad offline de 3 horas; Niño usará `800 ms` y 8 horas. La fórmula completa de modificadores para etapas posteriores sigue pendiente de balance.
+**Detalle del sistema implementado:**
+- **Bebé**: intervalo de `1.000 ms` (1 tap/s) y capacidad offline de 3 horas (`ratePerSecond * 3 * 3600`).
+- **Niño**: coste de evolución de `10.000.000 🧈`, intervalo de `900 ms` (~1,11 taps/s) y capacidad offline de 6 horas (`ratePerSecond * 6 * 3600`).
+- **Formateo de Grandes Números**: a partir de 1.000.000, los contadores de Mantecas se abrevian con 3 decimales (ej. `10,000` con subtítulo `Millones de 🧈`), escalando cada 3 ceros hasta `Decillones` ($10^{33}$). Al pulsar el contador se muestra un toast con la cifra exacta sin redondear.
+- **Acumulación Online**: bucle continuo vía `requestAnimationFrame` que acredita Mantecas al saldo activo.
+- **Banco Offline**: acumulación de tiempo en segundo plano con botón manual de **Recoger**.
+- **Anti-Cheat (Rollback)**: los retrocesos del reloj del dispositivo se registran como deuda temporal (`timeDebtMs`) que debe amortizarse antes de generar nuevas Mantecas offline.
 
 ## 11. Auras de material
 

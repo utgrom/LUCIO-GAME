@@ -16,8 +16,7 @@
     "totalMantecasEarned",
     "totalMantecasSpent",
   ]);
-  const MAX_VALUE = Number.MAX_SAFE_INTEGER;
-  const AMBU_STAGES = Object.freeze(["locked", "egg", "hatching", "baby"]);
+  const AMBU_STAGES = Object.freeze(["locked", "egg", "hatching", "baby", "child", "teen", "adult", "master"]);
 
   let lastError = null;
 
@@ -29,7 +28,7 @@
     const numeric = typeof value === "string" && value.trim() !== "" ? Number(value) : value;
 
     if (!Number.isFinite(numeric) || numeric < 0) return fallback;
-    return Math.min(MAX_VALUE, Math.floor(numeric));
+    return Math.min(Number.MAX_SAFE_INTEGER, Math.floor(numeric));
   }
 
   function createCounts() {
@@ -47,6 +46,9 @@
       notificationSeen: false,
       discoveredAt: 0,
       hatchedAt: 0,
+      lastActiveTimestamp: 0,
+      offlineStored: 0,
+      timeDebtMs: 0,
     };
   }
 
@@ -114,6 +116,9 @@
     normalized.ambu.notificationSeen = Boolean(ambuSource.notificationSeen);
     normalized.ambu.discoveredAt = toSafeInteger(ambuSource.discoveredAt, 0);
     normalized.ambu.hatchedAt = toSafeInteger(ambuSource.hatchedAt, 0);
+    normalized.ambu.lastActiveTimestamp = toSafeInteger(ambuSource.lastActiveTimestamp, 0);
+    normalized.ambu.offlineStored = toSafeInteger(ambuSource.offlineStored, 0);
+    normalized.ambu.timeDebtMs = toSafeInteger(ambuSource.timeDebtMs, 0);
 
     if (normalized.ambu.stage === "locked" || normalized.ambu.stage === "egg") {
       normalized.ambu.hatchTaps = 0;

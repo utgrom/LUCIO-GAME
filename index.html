@@ -8,7 +8,7 @@
   <title>Lucio Lootbox Clicker</title>
   <link rel="stylesheet" href="css/effects.css?v=20260813-game-03">
   <link rel="stylesheet" href="css/opening.css?v=20260813-game-03">
-  <link rel="stylesheet" href="css/game.css?v=20260815-ambu-hatch-01">
+  <link rel="stylesheet" href="css/game.css?v=20260819-ambu-blink-02">
   <link rel="stylesheet" href="css/debug.css?v=20260813-game-03">
 </head>
 <body>
@@ -34,9 +34,10 @@
           <img src="assets/invocados/Ambu_1.png" alt="" draggable="false">
         </button>
 
-        <div class="wallet-card">
+        <div class="wallet-card" data-wallet-card tabindex="0" role="button" aria-label="Tus Mantecas. Toca para ver cantidad exacta">
           <span class="wallet-card__label">Tus Mantecas</span>
-          <strong class="wallet-card__amount"><span data-mantecas>0</span> <span aria-hidden="true">🧈</span></strong>
+          <strong class="wallet-card__amount"><span data-mantecas>0</span> <span data-mantecas-icon aria-hidden="true">🧈</span></strong>
+          <span class="wallet-card__unit" data-mantecas-unit hidden></span>
           <span class="wallet-card__rate" data-passive-rate hidden><b data-passive-per-second>0</b> 🧈/s</span>
         </div>
 
@@ -66,9 +67,18 @@
           <span aria-hidden="true">‹</span> Volver
         </button>
 
-        <div class="ambu-wallet" aria-label="Mantecas disponibles">
+        <div class="ambu-wallet" data-ambu-wallet tabindex="0" role="button" aria-label="Tus Mantecas. Toca para ver cantidad exacta">
           <span>Tus Mantecas</span>
-          <strong><b data-ambu-mantecas>0</b> <i aria-hidden="true">🧈</i></strong>
+          <strong><b data-ambu-mantecas>0</b> <i data-ambu-mantecas-icon aria-hidden="true">🧈</i></strong>
+          <span class="ambu-wallet__unit" data-ambu-mantecas-unit hidden></span>
+        </div>
+
+        <div class="ambu-evolution-bar" data-ambu-evolution-bar hidden>
+          <button class="game-button game-button--evolution" type="button" data-open-evolution-modal>
+            <span class="evolution-btn__icon" aria-hidden="true">✦</span>
+            <b>EVOLUCIÓN</b>
+            <span class="evolution-btn__badge">Ambu Niño</span>
+          </button>
         </div>
 
         <div class="ambu-stage" data-ambu-stage data-stage="egg">
@@ -78,10 +88,15 @@
             <span data-ambu-instruction>Hay algo vivo entre las barras de Manteca...</span>
           </header>
 
-          <button class="ambu-character" type="button" data-ambu-character aria-label="Tocar el huevo misterioso">
-            <span class="ambu-character__aura" aria-hidden="true"></span>
-            <img data-ambu-sprite src="assets/invocados/Ambu_1.png" alt="Huevo misterioso" draggable="false">
-          </button>
+          <div class="ambu-character-wrap">
+            <button class="ambu-character" type="button" data-ambu-character aria-label="Tocar el huevo misterioso">
+              <span class="ambu-character__aura" aria-hidden="true"></span>
+              <img data-ambu-sprite src="assets/invocados/Ambu_1.png" alt="Huevo misterioso" draggable="false">
+            </button>
+            <button class="ambu-info-btn" type="button" data-open-ambu-info aria-label="Información sobre Ambu" hidden>
+              <img src="assets/UI/AmbuInfoButton.png" alt="Información" draggable="false">
+            </button>
+          </div>
 
           <div class="ambu-hatch-progress" data-ambu-progress hidden>
             <div><span>Cascarón</span><strong><b data-ambu-hits>0</b> / 15</strong></div>
@@ -98,10 +113,9 @@
             <small data-ambu-price-help></small>
           </section>
 
-          <section class="ambu-baby-card" data-ambu-baby-card hidden>
-            <span>NUEVO COMPAÑERO</span>
-            <strong>Ambu bebé se ha unido a ti</strong>
-            <p>Parece hambriento, curioso y cargado de una energía extraña.</p>
+          <section class="ambu-rate-card" data-ambu-rate-card hidden>
+            <span class="ambu-rate-card__badge">PRODUCCIÓN PASIVA</span>
+            <strong class="ambu-rate-card__value">1 Tap /s <small>(<b data-ambu-rate-value>1</b> 🧈/s)</small></strong>
           </section>
         </div>
       </section>
@@ -181,16 +195,88 @@
     </form>
   </dialog>
 
+  <dialog class="game-dialog ambu-info-dialog" data-ambu-info-dialog aria-labelledby="ambu-info-title">
+    <div class="ambu-info-modal">
+      <header class="ambu-info-modal__header">
+        <div>
+          <span class="ambu-info-modal__kicker">COMPAÑERO</span>
+          <h2 id="ambu-info-title" data-ambu-info-name>Ambu bebé</h2>
+        </div>
+        <button class="icon-button ambu-info-modal__close" type="button" data-close-ambu-info aria-label="Cerrar">×</button>
+      </header>
+      <div class="ambu-info-modal__body">
+        <blockquote class="ambu-info-modal__lore" data-ambu-info-lore>
+          "Este hambriento bebé parece multiplicar la grasa de las mantecas que tiene a su alrededor. Es sospechosamente mágico..."
+        </blockquote>
+        <div class="ambu-info-modal__divider" aria-hidden="true"></div>
+        <ul class="ambu-info-modal__stats" data-ambu-info-stats>
+          <li>
+            <span class="ambu-info-modal__stat-icon" aria-hidden="true">⚡</span>
+            <span>Produce <strong>1 tap / s</strong> de forma pasiva</span>
+          </li>
+          <li>
+            <span class="ambu-info-modal__stat-icon" aria-hidden="true">⏳</span>
+            <span>Mientras está cerrado el juego, puede acumular el equivalente a <strong>3 horas</strong> de producción</span>
+          </li>
+        </ul>
+      </div>
+      <footer class="ambu-info-modal__footer">
+        <button class="game-button game-button--wide" type="button" data-close-ambu-info>Entendido</button>
+      </footer>
+    </div>
+  </dialog>
+
+  <dialog class="game-dialog ambu-evolution-dialog" data-ambu-evolution-dialog aria-labelledby="evolution-dialog-title">
+    <div class="ambu-evolution-modal">
+      <header class="ambu-evolution-modal__header">
+        <div>
+          <span class="ambu-evolution-modal__kicker">CRECIMIENTO</span>
+          <h2 id="evolution-dialog-title">Evolución: Ambu Niño</h2>
+        </div>
+        <button class="icon-button ambu-evolution-modal__close" type="button" data-close-evolution-modal aria-label="Cerrar">×</button>
+      </header>
+      <div class="ambu-evolution-modal__body">
+        <p class="ambu-evolution-modal__lead">
+          Alimenta a Ambu con mantecas para hacerlo crecer a <strong>"Ambu Niño"</strong>.
+        </p>
+        <div class="ambu-evolution-benefits">
+          <span class="ambu-evolution-benefits__title">Beneficios:</span>
+          <ul class="ambu-evolution-benefits__list">
+            <li>
+              <span class="benefit-icon" aria-hidden="true">⚡</span>
+              <span><strong>1 tap cada 1s</strong> ➔ <strong>1 tap cada 0,9s</strong></span>
+            </li>
+            <li>
+              <span class="benefit-icon" aria-hidden="true">⏳</span>
+              <span>Límite de mantecas offline <strong>3 hs</strong> ➔ <strong>6 hs</strong></span>
+            </li>
+            <li>
+              <span class="benefit-icon" aria-hidden="true">✦</span>
+              <span><em>"Ambu despierta curiosidad por los Lucios..."</em> Desbloquea las auras.</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <footer class="ambu-evolution-modal__footer">
+        <button class="game-button game-button--primary game-button--wide" type="button" data-buy-evolution>
+          Evolucionar · 10.000.000 🧈
+        </button>
+        <small class="ambu-evolution-modal__help" data-evolution-price-help></small>
+      </footer>
+    </div>
+  </dialog>
+
   <div class="game-toast" data-game-toast role="status" aria-live="polite"></div>
 
-  <script src="js/config.js?v=20260815-ambu-hatch-01"></script>
+  <script src="js/config.js?v=20260820-ambu-child-01"></script>
   <script src="js/lucio-renderer.js?v=20260813-game-03"></script>
   <script src="js/backpack-renderer.js?v=20260813-game-03"></script>
   <script src="js/audio.js?v=20260813-game-03"></script>
-  <script src="js/save.js?v=20260815-ambu-hatch-01"></script>
-  <script src="js/game-state.js?v=20260815-ambu-hatch-01"></script>
+  <script src="js/save.js?v=20260820-ambu-child-01"></script>
+  <script src="js/game-state.js?v=20260820-ambu-child-01"></script>
   <script src="js/collection.js?v=20260814-card-hover-02"></script>
-  <script src="js/game.js?v=20260815-ambu-hatch-01"></script>
-  <script src="js/debug.js?v=20260815-ambu-hatch-01"></script>
+  <script src="js/ambu-renderer.js?v=20260820-ambu-child-01"></script>
+  <script src="js/game.js?v=20260820-ambu-child-01"></script>
+  <script src="js/debug.js?v=20260820-ambu-child-01"></script>
 </body>
 </html>
